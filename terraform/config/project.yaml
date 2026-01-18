@@ -1,0 +1,12 @@
+# Project Configuration
+project_name: devops-kt
+azure_location: westeurope
+environment: dev
+azure_resource_group_name: devops-kt-rg
+
+# Common tags for all resources
+common_tags:
+  CreatedBy: Terraform
+  Topology: HubSpoke
+  Author: pizour
+

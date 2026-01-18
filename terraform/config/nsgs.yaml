@@ -1,0 +1,227 @@
+# Default NSG Rules Applied to All Subnets
+default_rules:
+  - name: DenyAllInbound
+    priority: 4096
+    direction: Inbound
+    access: Deny
+    protocol: "*"
+    source_port_range: "*"
+    destination_port_range: "*"
+    source_address_prefix: "*"
+    destination_address_prefix: "*"
+  - name: AllowAllOutbound
+    priority: 4096
+    direction: Outbound
+    access: Allow
+    protocol: "*"
+    source_port_range: "*"
+    destination_port_range: "*"
+    source_address_prefix: "*"
+    destination_address_prefix: "*"
+
+# Subnet-Specific NSG Configurations
+subnet_nsgs:
+  hub-vnet/hub-fw-snet:
+    nsg_name: devops-kt-hub-fw-snet-nsg
+    rules:
+      - name: AllowIntraSubnet
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.0.0/25
+        destination_address_prefix: "*"
+      - name: AllowIntraSubnetOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: "*"
+        destination_address_prefix: 10.0.0.0/25
+      - name: AllowSSHFromDesktop
+        priority: 105
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "22"
+        source_address_prefix: ALLOWED_SSH_IPS
+        destination_address_prefix: "*"
+      - name: AllowInternalTraffic
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.0.0/8
+        destination_address_prefix: "*"
+  hub-vnet/AzureBastionSubnet:
+    nsg_name: devops-kt-hub-bastion-snet-nsg
+    rules:
+      - name: AllowHTTPSInbound
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "443"
+        source_address_prefix: Internet
+        destination_address_prefix: "*"
+      - name: AllowGatewayManager
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "443"
+        source_address_prefix: GatewayManager
+        destination_address_prefix: "*"
+      - name: AllowBastionCommunication
+        priority: 120
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "8080"
+        source_address_prefix: VirtualNetwork
+        destination_address_prefix: VirtualNetwork
+      - name: AllowSslOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "443"
+        source_address_prefix: "*"
+        destination_address_prefix: Internet
+      - name: AllowAzureCloudOutbound
+        priority: 110
+        direction: Outbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "443"
+        source_address_prefix: "*"
+        destination_address_prefix: AzureCloud
+      - name: AllowBastionCommunicationOutbound
+        priority: 120
+        direction: Outbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "8080"
+        source_address_prefix: VirtualNetwork
+        destination_address_prefix: VirtualNetwork
+      - name: AllowGetSessionInfoOutbound
+        priority: 130
+        direction: Outbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: "*"
+        destination_address_prefix: Internet
+  hub-vnet/hub-shared-snet:
+    nsg_name: devops-kt-hub-shared-snet-nsg
+    rules:
+      - name: AllowIntraSubnet
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.3.0/24
+        destination_address_prefix: "*"
+      - name: AllowIntraSubnetOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: "*"
+        destination_address_prefix: 10.0.3.0/24
+      - name: AllowInternalTraffic
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.0.0/8
+        destination_address_prefix: "*"
+  spoke1-aks-vnet/spoke1-aks-snet:
+    nsg_name: devops-kt-spoke1-aks-snet-nsg
+    rules:
+      - name: AllowClusterIntraSubnet
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.1.0.0/24
+        destination_address_prefix: "*"
+      - name: AllowClusterOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: "*"
+        destination_address_prefix: 10.1.0.0/24
+      - name: AllowInternalTraffic
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.0.0/8
+        destination_address_prefix: "*"
+  spoke2-mgmt-vnet/spoke2-vms-snet:
+    nsg_name: devops-kt-spoke2-vms-snet-nsg
+    rules:
+      - name: AllowIntraSubnet
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.2.0.0/24
+        destination_address_prefix: "*"
+      - name: AllowIntraSubnetOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: "*"
+        destination_address_prefix: 10.2.0.0/24
+      - name: AllowRDPFromBastion
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "3389"
+        source_address_prefix: 10.0.1.0/24
+        destination_address_prefix: "*"
+      - name: AllowInternalTraffic
+        priority: 120
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: 10.0.0.0/8
+        destination_address_prefix: "*"

@@ -1,0 +1,19 @@
+# Virtual Networks Configuration
+hub-vnet:
+  hub: true
+  address_space:
+    - 10.0.0.0/16
+  subnets:
+    hub-fw-snet: 10.0.0.0/24
+    AzureBastionSubnet: 10.0.1.0/24
+    hub-shared-snet: 10.0.3.0/24
+spoke1-aks-vnet:
+  address_space:
+    - 10.1.0.0/16
+  subnets:
+    spoke1-aks-snet: 10.1.0.0/24
+spoke2-mgmt-vnet:
+  address_space:
+    - 10.2.0.0/16
+  subnets:
+    spoke2-vms-snet: 10.2.0.0/24

@@ -1,0 +1,21 @@
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Local variables file - NEVER commit these (contains credentials)
+*.tfvars
+terraform.tfvars.example  # Example file CAN be committed
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+#TO DO
+examples/

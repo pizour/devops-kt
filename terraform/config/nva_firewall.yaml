@@ -1,0 +1,9 @@
+# Ubuntu NVA Firewall Configuration
+nva_firewall:
+  enabled: true
+  nva_name: fw
+  private_ip_address: "10.0.0.10"
+  vm_size: "Standard_D2s_v3"
+  enable_public_ip: true
+  enable_ip_forwarding: true
+  enable_accelerated_networking: false
