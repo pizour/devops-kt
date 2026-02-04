@@ -1,0 +1,24 @@
+---
+- name: Simple Test Playbook
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Print welcome message
+      debug:
+        msg: "Hello from AWX! This is a simple playbook running on {{ ansible_date_time.iso8601 }}"
+
+    - name: Print system information
+      debug:
+        msg: |
+          AWX Playbook Execution:
+          - Environment: AKS (Azure Kubernetes Service)
+          - Project: DevOps-KT
+          - Status: Successfully executed
+
+    - name: List current directory
+      command: pwd
+      register: current_dir
+
+    - name: Show current working directory
+      debug:
+        msg: "Current directory: {{ current_dir.stdout }}"
