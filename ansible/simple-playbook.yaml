@@ -5,7 +5,7 @@
   tasks:
     - name: Print welcome message
       debug:
-        msg: "Hello from AWX! This is a simple playbook running on {{ ansible_date_time.iso8601 }}"
+        msg: "Hello from AWX! This is a simple playbook running in AKS."
 
     - name: Print system information
       debug:
