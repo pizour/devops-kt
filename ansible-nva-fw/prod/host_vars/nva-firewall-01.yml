@@ -1,0 +1,11 @@
+---
+# Host-specific variables for nva-firewall-01
+
+# Override the default interface if needed
+# firewall_default_interface: "eth0"
+
+# Add any host-specific network configurations here
+# private_ip: "10.0.1.10"
+
+ansible_user: azureuser
+ansible_ssh_pass: <insert password>

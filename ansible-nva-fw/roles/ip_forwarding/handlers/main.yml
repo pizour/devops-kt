@@ -1,0 +1,5 @@
+---
+# Handlers for ip_forwarding role
+
+- name: Apply sysctl settings
+  ansible.builtin.command: sysctl -p

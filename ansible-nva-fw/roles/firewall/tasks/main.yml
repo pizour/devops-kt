@@ -1,0 +1,59 @@
+---
+# Role: firewall
+# Description: Configure iptables rules for NVA firewall functionality
+
+- name: Get primary network interface
+  ansible.builtin.shell: |
+    ip route show default | awk '/default/ {print $5}' | head -n1
+  register: detected_interface
+  changed_when: false
+
+- name: Set primary interface variable
+  ansible.builtin.set_fact:
+    primary_interface: "{{ detected_interface.stdout if detected_interface.stdout != '' else firewall_default_interface }}"
+
+- name: Get private IP address of primary interface
+  ansible.builtin.shell: |
+    ip addr show {{ primary_interface }} | grep "inet " | awk '{print $2}' | cut -d/ -f1
+  register: detected_private_ip
+  changed_when: false
+
+- name: Display network configuration
+  ansible.builtin.debug:
+    msg:
+      - "Primary interface: {{ primary_interface }}"
+      - "Private IP: {{ detected_private_ip.stdout }}"
+
+- name: Create iptables rules directory
+  ansible.builtin.file:
+    path: /etc/iptables
+    state: directory
+    mode: '0755'
+
+- name: Deploy iptables rules from template
+  ansible.builtin.template:
+    src: rules.v4.j2
+    dest: /etc/iptables/rules.v4
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: Restore iptables rules
+
+- name: Display NAT rules
+  ansible.builtin.command: iptables -t nat -L -v -n
+  register: nat_rules
+  changed_when: false
+
+- name: Display FORWARD rules
+  ansible.builtin.command: iptables -L FORWARD -v -n
+  register: forward_rules
+  changed_when: false
+
+- name: Show current firewall configuration
+  ansible.builtin.debug:
+    msg:
+      - "NAT Rules:"
+      - "{{ nat_rules.stdout_lines }}"
+      - "FORWARD Rules:"
+      - "{{ forward_rules.stdout_lines }}"

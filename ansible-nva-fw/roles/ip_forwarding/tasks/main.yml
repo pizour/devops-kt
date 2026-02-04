@@ -1,0 +1,27 @@
+---
+# Role: ip_forwarding
+# Description: Enable IP forwarding for routing traffic
+
+- name: Check current IP forwarding status
+  ansible.builtin.command: sysctl net.ipv4.ip_forward
+  register: ip_forward_status
+  changed_when: false
+
+- name: Enable IP forwarding in sysctl.conf
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.conf
+    regexp: '^net\.ipv4\.ip_forward'
+    line: 'net.ipv4.ip_forward=1'
+    state: present
+  notify: Apply sysctl settings
+
+- name: Apply sysctl settings immediately
+  ansible.builtin.command: sysctl -p
+  when: "'net.ipv4.ip_forward = 0' in ip_forward_status.stdout"
+  changed_when: true
+
+- name: Verify IP forwarding is enabled
+  ansible.builtin.command: sysctl net.ipv4.ip_forward
+  register: verify_ip_forward
+  changed_when: false
+  failed_when: "'net.ipv4.ip_forward = 0' in verify_ip_forward.stdout"

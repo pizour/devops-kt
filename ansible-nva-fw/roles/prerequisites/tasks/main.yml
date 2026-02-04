@@ -1,0 +1,24 @@
+---
+# Role: prerequisites
+# Description: Install required packages for NVA firewall
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ required_packages }}"
+    state: present
+    update_cache: false
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  notify: Restart netfilter-persistent
+
+- name: Ensure netfilter-persistent service is enabled
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    enabled: true
