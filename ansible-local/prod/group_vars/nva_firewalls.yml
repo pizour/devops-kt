@@ -1,0 +1,22 @@
+---
+# Group variables for NVA firewall hosts
+
+# Network configuration
+ip_forward_enabled: true
+main_internal_network_cidr: "10.0.0.0/8"
+
+# Package installation
+required_packages:
+  - iptables-persistent
+  - netfilter-persistent
+
+# Firewall configuration
+firewall_default_interface: "eth0"  # Can be overridden per host
+
+# Additional networks allowed to forward (optional)
+allowed_networks:
+  - "10.0.0.0/8"
+  # - "172.16.0.0/12"  # Uncomment to allow additional networks
+
+# Enable logging for dropped packets
+enable_drop_logging: false

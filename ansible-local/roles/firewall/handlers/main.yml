@@ -1,0 +1,11 @@
+---
+# Handlers for firewall role
+
+- name: restore iptables rules
+  ansible.builtin.command: iptables-restore < /etc/iptables/rules.v4
+  notify: restart netfilter-persistent
+
+- name: restart netfilter-persistent
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    state: restarted

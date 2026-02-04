@@ -1,0 +1,49 @@
+---
+# Playbook: Configure NVA Firewall
+# Description: Configure Azure VM as Network Virtual Appliance (NVA) firewall
+# Target: nva_firewalls group
+
+- name: Configure NVA Firewall
+  hosts: nva_firewalls
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Display target host information
+      ansible.builtin.debug:
+        msg:
+          - "Configuring NVA firewall on: {{ inventory_hostname }}"
+          - "IP Address: {{ ansible_host }}"
+          - "Distribution: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+  roles:
+    - role: prerequisites
+      tags: ['prerequisites', 'packages']
+
+    - role: ip_forwarding
+      tags: ['ip_forwarding', 'network']
+
+    - role: firewall
+      tags: ['firewall', 'iptables']
+
+  post_tasks:
+    - name: Verify NVA firewall configuration
+      ansible.builtin.debug:
+        msg:
+          - "NVA Firewall configuration completed successfully!"
+          - "IP forwarding: {{ 'Enabled' if ip_forward_enabled else 'Disabled' }}"
+          - "Internal network: {{ main_internal_network_cidr }}"
+          - "Firewall rules applied and persisted"
+
+    - name: Display final system status
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - "sysctl net.ipv4.ip_forward"
+        - "systemctl status netfilter-persistent --no-pager"
+      register: system_status
+      changed_when: false
+      failed_when: false
+
+    - name: Show system status
+      ansible.builtin.debug:
+        var: system_status.results
