@@ -32,7 +32,7 @@
         msg:
           - "NVA Firewall configuration completed successfully!"
           - "IP forwarding: {{ 'Enabled' if ip_forward_enabled else 'Disabled' }}"
-          - "Internal network: {{ main_internal_network_cidr }}"
+          - "Main internal network: {{ main_internal_network_cidr }}"
           - "Firewall rules applied and persisted"
 
     - name: Display final system status

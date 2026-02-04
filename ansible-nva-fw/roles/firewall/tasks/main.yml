@@ -4,7 +4,6 @@
 
 - name: Get primary network interface
   ansible.builtin.shell: |
-    set -o pipefail
     ip route show default | awk '/default/ {print $5}' | head -n1
   register: detected_interface
   changed_when: false
@@ -15,7 +14,6 @@
 
 - name: Get private IP address of primary interface
   ansible.builtin.shell: |
-    set -o pipefail
     ip addr show {{ primary_interface }} | grep "inet " | awk '{print $2}' | cut -d/ -f1
   register: detected_private_ip
   changed_when: false
