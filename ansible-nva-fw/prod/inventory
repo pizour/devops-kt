@@ -1,5 +1,5 @@
 [nva_firewalls]
-nva-firewall-01 ansible_host=20.61.190.101
+nva-firewall-01 ansible_host=<insert IP>
 
 [nva_firewalls:vars]
 ansible_become=yes
