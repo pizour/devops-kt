@@ -28,8 +28,24 @@ PROJECT_NAME = "devops-kt"
 GIT_URL = "https://github.com/pizour/devops-kt/"
 
 # Job Template Configuration
-JOB_TEMPLATE_NAME = "simple-playbook"
-PLAYBOOK_NAME = "ansible/simple-playbook.yaml"
+JOB_TEMPLATE_NAME = "gather-vm-info"
+PLAYBOOK_NAME = "ansible/gather-vm-info.yaml"
+
+# Inventory Configuration
+INVENTORY_NAME = "devops-kt"
+INVENTORY_DESCRIPTION = "DevOps-KT Infrastructure Inventory"
+
+# Hosts to add
+HOSTS = [
+    {
+        "name": "fw-nva",
+        "description": "Ubuntu NVA Firewall",
+        "variables": {
+            "ansible_host": "10.0.0.10",
+            "ansible_connection": "ssh",
+        }
+    }
+]
 
 
 class AWXClient:
@@ -114,6 +130,13 @@ class AWXClient:
             return None
         
         print(f"\n🎯 Setting up job template: {JOB_TEMPLATE_NAME}")
+        
+        # Extra vars for ansible connection
+        extra_vars = {
+            "ansible_user": "azureuser",
+            "ansible_password": "xxx",
+        }
+        
         job_data = {
             "name": JOB_TEMPLATE_NAME,
             "description": f"Job template for {PLAYBOOK_NAME}",
@@ -122,15 +145,43 @@ class AWXClient:
             "inventory": inventory["id"],
             "ask_inventory": False,
             "ask_credential": False,
+            "ask_variables_on_launch": True,
             "verbosity": 0,
-            "extra_vars": "",
+            "extra_vars": json.dumps(extra_vars),
             "limit": "",
             "forks": 0,
             "use_fact_cache": False,
         }
         
-        job_template = self.get_or_create("job_templates", JOB_TEMPLATE_NAME, job_data)
-        return job_template
+        url = self.get_url("job_templates")
+        
+        # Check if exists
+        response = self.session.get(url, params={"name": JOB_TEMPLATE_NAME})
+        if response.status_code == 200:
+            results = response.json().get("results", [])
+            if results:
+                job_template = results[0]
+                print(f"✓ {JOB_TEMPLATE_NAME} already exists (ID: {job_template['id']})")
+                
+                # Update the template with new settings
+                update_url = self.get_url(f"job_templates/{job_template['id']}")
+                update_response = self.session.patch(update_url, json=job_data)
+                if update_response.status_code == 200:
+                    print(f"✓ Updated job template settings")
+                    return update_response.json()
+                return job_template
+        
+        # Create new
+        response = self.session.post(url, json=job_data)
+        if response.status_code in [201, 200]:
+            result = response.json()
+            print(f"✓ Created job template '{JOB_TEMPLATE_NAME}' (ID: {result['id']})")
+            return result
+        else:
+            print(f"✗ Failed to create job template")
+            print(f"  Status: {response.status_code}")
+            print(f"  Response: {response.text}")
+            return None
 
     def launch_job_template(self, job_template):
         """Launch the job template"""
@@ -154,10 +205,93 @@ class AWXClient:
             print(f"  Response: {response.text}")
             return None
 
+    def create_inventory(self):
+        """Create or get inventory"""
+        print(f"\n📦 Setting up inventory: {INVENTORY_NAME}")
+        url = self.get_url("inventories")
+        
+        # Check if exists
+        response = self.session.get(url, params={"name": INVENTORY_NAME})
+        if response.status_code == 200:
+            results = response.json().get("results", [])
+            if results:
+                inventory = results[0]
+                print(f"✓ Inventory '{INVENTORY_NAME}' already exists (ID: {inventory['id']})")
+                return inventory
+        
+        # Create new
+        inventory_data = {
+            "name": INVENTORY_NAME,
+            "description": INVENTORY_DESCRIPTION,
+            "organization": 1,
+        }
+        
+        response = self.session.post(url, json=inventory_data)
+        if response.status_code in [201, 200]:
+            inventory = response.json()
+            print(f"✓ Created inventory '{INVENTORY_NAME}' (ID: {inventory['id']})")
+            return inventory
+        else:
+            print(f"✗ Failed to create inventory")
+            print(f"  Status: {response.status_code}")
+            print(f"  Response: {response.text}")
+            return None
+
+    def add_host(self, inventory, host_data):
+        """Add host to inventory"""
+        host_name = host_data["name"]
+        print(f"  🖥️  Adding host: {host_name}")
+        
+        url = self.get_url(f"inventories/{inventory['id']}/hosts")
+        
+        # Check if exists
+        response = self.session.get(url, params={"name": host_name})
+        if response.status_code == 200:
+            results = response.json().get("results", [])
+            if results:
+                host = results[0]
+                print(f"    ✓ Host '{host_name}' already exists (ID: {host['id']})")
+                # Update variables if needed
+                return self.update_host(host, host_data)
+        
+        # Create new
+        host_payload = {
+            "name": host_data["name"],
+            "description": host_data.get("description", ""),
+            "variables": json.dumps(host_data.get("variables", {}))
+        }
+        
+        response = self.session.post(url, json=host_payload)
+        if response.status_code in [201, 200]:
+            host = response.json()
+            print(f"    ✓ Created host '{host_name}' (ID: {host['id']})")
+            return host
+        else:
+            print(f"    ✗ Failed to create host '{host_name}'")
+            print(f"      Status: {response.status_code}")
+            print(f"      Response: {response.text}")
+            return None
+
+    def update_host(self, host, host_data):
+        """Update host variables"""
+        url = self.get_url(f"hosts/{host['id']}")
+        
+        payload = {
+            "variables": json.dumps(host_data.get("variables", {}))
+        }
+        
+        response = self.session.patch(url, json=payload)
+        if response.status_code in [200]:
+            print(f"    ✓ Updated host variables")
+            return response.json()
+        else:
+            print(f"    ✗ Failed to update host")
+            return host
+
     def setup(self, launch=False):
-        """Setup project and job template"""
+        """Setup project, job template, and inventory"""
         print("=" * 60)
-        print("AWX Project and Job Template Setup")
+        print("AWX Setup: Project, Job Template, and Inventory")
         print("=" * 60)
         
         try:
@@ -166,10 +300,17 @@ class AWXClient:
             if not project:
                 return False
             
-            # Get inventory
-            inventory = self.get_inventory()
+            # Create custom inventory
+            inventory = self.create_inventory()
             if not inventory:
-                return False
+                # Fall back to default inventory
+                inventory = self.get_inventory()
+                if not inventory:
+                    return False
+            
+            # Add hosts to inventory
+            for host_data in HOSTS:
+                self.add_host(inventory, host_data)
             
             # Create job template
             job_template = self.create_job_template(project, inventory)
@@ -186,10 +327,12 @@ class AWXClient:
             print(f"\nProject: {PROJECT_NAME}")
             print(f"  Git URL: {GIT_URL}")
             print(f"  Project ID: {project['id']}")
+            print(f"\nInventory: {INVENTORY_NAME}")
+            print(f"  Inventory ID: {inventory['id']}")
+            print(f"  Hosts: {len(HOSTS)}")
             print(f"\nJob Template: {JOB_TEMPLATE_NAME}")
             print(f"  Playbook: {PLAYBOOK_NAME}")
             print(f"  Job Template ID: {job_template['id']}")
-            print(f"  Inventory: {inventory['name']}")
             print(f"\nAccess AWX at: {AWX_HOST}")
             
             return True
