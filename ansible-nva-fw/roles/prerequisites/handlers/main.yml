@@ -1,7 +1,7 @@
 ---
 # Handlers for prerequisites role
 
-- name: restart netfilter-persistent
+- name: Restart netfilter-persistent
   ansible.builtin.systemd:
     name: netfilter-persistent
     state: restarted

@@ -8,4 +8,4 @@
 # private_ip: "10.0.1.10"
 
 ansible_user: azureuser
-ansible_ssh_pass: changeme
+ansible_ssh_pass: Admin123-

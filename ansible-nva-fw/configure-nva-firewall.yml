@@ -5,8 +5,8 @@
 
 - name: Configure NVA Firewall
   hosts: nva_firewalls
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   pre_tasks:
     - name: Display target host information
