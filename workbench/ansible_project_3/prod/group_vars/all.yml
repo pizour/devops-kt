@@ -1,0 +1,47 @@
+---
+# Global variables for all hosts in PRODUCTION environment
+# Production has stricter settings and better resources
+
+# Environment identification
+environment: "production"
+env_short: "prod"
+
+# SSH and connection settings
+ansible_user: ubuntu
+ansible_become: true
+ansible_become_method: sudo
+ansible_python_interpreter: /usr/bin/python3
+
+# Common packages for all servers
+common_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+  - net-tools
+  - jq
+  - sysstat
+  - iotop
+
+# Monitoring and logging
+log_retention_days: 30  # Longer retention in prod
+metrics_enabled: true
+monitoring_port: 9100
+
+# Security settings (stricter in production)
+firewall_enabled: true
+ssh_port: 22
+allow_password_auth: false
+auto_security_updates: true
+
+# Application defaults
+app_log_level: "info"  # Less verbose in prod
+app_timeout: 600  # Higher timeout for prod
+app_max_memory: "4G"  # More memory in prod
+
+# Backup configuration (more frequent in prod)
+backup_enabled: true
+backup_hour: 1
+backup_minute: 0
+backup_offsite_enabled: true

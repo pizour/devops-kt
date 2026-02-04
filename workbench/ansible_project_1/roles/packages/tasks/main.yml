@@ -1,0 +1,9 @@
+---
+- name: Install packages
+  ansible.builtin.apt:
+    name: "{{ packages_to_install }}"
+    state: present
+    update_cache: true
+
+
+# First do only nginx, then show group vars and change to variable

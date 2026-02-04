@@ -1,0 +1,24 @@
+---
+# Group variables for Poland region NVAs
+# These variables apply to all hosts in the 'linux-nvas-poland' group
+
+# Region-specific settings
+region: "poland"
+data_center: "eu-east"
+timezone: "Europe/Warsaw"
+
+# Network configuration
+dns_servers:
+  - "10.10.0.10"
+  - "10.10.0.11"
+ntp_servers:
+  - "pl.pool.ntp.org"
+  - "europe.pool.ntp.org"
+
+# Monitoring settings
+monitoring_endpoint: "https://monitor-pl.example.com"
+log_server: "10.10.1.100"
+
+# Application settings
+app_environment: "staging"
+max_connections: 500

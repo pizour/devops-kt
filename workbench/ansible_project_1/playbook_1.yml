@@ -1,0 +1,71 @@
+---
+- name: Configure all servers
+  hosts: all
+  become: true
+  tasks:
+    # 1st task
+    - name: Ensure system is up to date
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    # 2nd task
+    - name: Create test file
+      ansible.builtin.copy:
+        dest: /home/ubuntu/test.txt
+        content: "configured by ansible\n"
+        mode: '0644'
+
+    # 3rd task
+    - name: Set hostname from host_vars
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+      when: hostname is defined
+
+    # 4th task
+    - name: Create multiple directories
+      ansible.builtin.file:
+        path: "/tmp/demo_{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - dir1
+        - dir2
+      register: dir_creation_results
+
+    # 5th task - comment out afterwards
+    - name: Show which directories were created or changed
+      ansible.builtin.debug:
+        msg: "Directory {{ item.item }}: changed={{ item.changed }}"
+      loop: "{{ dir_creation_results.results }}"
+      when: dir_creation_results is defined
+
+    # 6th task
+    - name: Include role to configure NTP
+      ansible.builtin.include_role:
+        name: ntp
+
+- name: Configure server packages
+  hosts: databases
+  become: true
+  roles:
+    - packages
+
+- name: Show OS family
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Debug OS family
+      ansible.builtin.debug:
+        var: ansible_os_family
+      tags:
+        - debug
+        - variable
+
+    - name: Show which user Ansible connects as
+      ansible.builtin.debug:
+        msg: "Connecting as user={{ ansible_user }}"
+      tags:
+        - debug
+        - user

@@ -1,0 +1,17 @@
+---
+# Variables specific to server_1 host
+hostname: server-1
+
+fallback_ntp_server: "ntp.ubuntu.com"
+
+# Add password using Ansible vault
+# echo "your_vault_password_here" > ./ansible/vault_pass
+# export ANSIBLE_VAULT_PASSWORD_FILE=./ansible/vault_pass
+# ansible-vault encrypt_string '<string_to_encrypt>' --name 'ansible_password'
+ansible_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          37643034643239626165336631613234326235623639366166343331383537353164623733323966
+          3635306135313632323063306532396239396363306238350a316433346338623237656236646461
+          35306331383236376135346662343937383738343938633864333232646365623133383835383434
+          3531653538393339310a613261343262623637646266376165393864633438633630663062633663
+          3734

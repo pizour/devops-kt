@@ -1,0 +1,44 @@
+---
+# Group variables for Fossology application servers in DEV
+# Fossology is an open source license compliance software system
+
+# Role identification
+server_role: application
+app_name: fossology
+app_version: "4.3.0"
+
+# Application configuration
+fossology_install_dir: "/opt/fossology"
+fossology_data_dir: "/srv/fossology"
+fossology_repo_dir: "/srv/fossology/repository"
+
+# Database configuration
+db_host: localhost
+db_port: 5432
+db_name: fossology
+db_user: fossy
+db_max_connections: 100
+db_shared_buffers: "256MB"
+
+# Web server configuration
+web_server: apache2
+web_server_port: 80
+web_server_ssl_port: 443
+ssl_enabled: false  # Disabled in dev
+
+# PHP configuration
+php_version: "8.1"
+php_memory_limit: "512M"
+php_upload_max_filesize: "700M"
+php_post_max_size: "701M"
+php_max_execution_time: 300
+
+# Application-specific settings
+fossology_scheduler_workers: 4
+fossology_agent_enabled: true
+fossology_debug_mode: true  # Enabled in dev
+
+# Backup settings
+backup_database: true
+backup_repository: true
+backup_retention: 7  # days

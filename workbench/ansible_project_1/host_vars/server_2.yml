@@ -1,0 +1,7 @@
+---
+# Variables specific to server_2 host
+hostname: server-2
+
+# Add password using env variables
+# export ANSIBLE_PASSWORD='SuperSecret'
+ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"

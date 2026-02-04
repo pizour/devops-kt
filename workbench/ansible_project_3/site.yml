@@ -1,0 +1,74 @@
+---
+# Complete Infrastructure Deployment Playbook
+# This demonstrates multi-environment support and role-based deployment
+#
+# Usage:
+#   Development: ansible-playbook -i dev/hosts site.yml
+#   Production:  ansible-playbook -i prod/hosts site.yml
+#   Specific role: ansible-playbook -i dev/hosts site.yml --tags bastion
+
+- name: Apply common configuration to all servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg: |
+          Deploying to: {{ hostname }}
+          Environment: {{ environment }}
+          Server Role: {{ server_role }}
+          IP Address: {{ ansible_host }}
+  
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    
+    - role: security
+      tags: ['security', 'hardening']
+
+- name: Configure bastion hosts
+  hosts: bastion
+  gather_facts: yes
+  become: yes
+  
+  roles:
+    - role: bastion
+      tags: ['bastion']
+  
+  post_tasks:
+    - name: Verify bastion configuration
+      ansible.builtin.debug:
+        msg: "Bastion {{ hostname }} configured successfully"
+
+- name: Deploy Fossology application servers
+  hosts: fossology
+  gather_facts: yes
+  become: yes
+  
+  roles:
+    - role: fossology
+      tags: ['fossology', 'application']
+  
+  post_tasks:
+    - name: Display Fossology access information
+      ansible.builtin.debug:
+        msg: |
+          Fossology deployed successfully!
+          Access URL: http://{{ ansible_host }}:{{ web_server_port }}
+          Environment: {{ environment }}
+
+- name: Final verification
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ Deployment completed for {{ hostname }}
+          Environment: {{ environment }} ({{ env_short }})
+          Server Role: {{ server_role }}
+          IP: {{ ansible_host }}
+      tags: ['summary']

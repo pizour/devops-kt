@@ -1,0 +1,9 @@
+[bastion]
+bastion_private ansible_host=10.120.11.20
+bastion_public ansible_host=31.6.151.11
+
+[fossology]
+fossology-app  ansible_host=10.120.11.10 ansible_connection=ssh
+
+[fossology:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p %r@10.120.11.20"'

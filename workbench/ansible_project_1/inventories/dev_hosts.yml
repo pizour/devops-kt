@@ -1,0 +1,87 @@
+
+# Before session:
+# remove sshpass from wsl
+# Open powerpoint
+# Open Draw.io
+# Open DevOps handbook
+# Deploy EC2 instances
+# Open Excalidraw on correct diagram
+
+
+# Start with only one server
+
+---
+all:
+  children:
+    webservers:
+      hosts:
+        server_1:
+          ansible_host: 3.73.189.231
+          ansible_user: ubuntu
+          #ansible_password: "Changeme123"
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+    databases:
+      hosts:
+        server_2:
+          ansible_host: 52.29.148.225
+          ansible_user: ubuntu
+          #ansible_password: "Changeme123"
+
+#### Connect to EC2
+#### ubuntu
+#### Changeme123
+
+########## INVENTORY ##########
+# Create inventory
+
+########## TASK, MODULE ##########
+# Show simple apt module, show alternative using command module
+
+########## PLAYBOOK ##########
+
+# Deploy playbook1 first 2 tasks
+# ansible-playbook -i inventories/dev_hosts.yml playbook_1.yml 
+
+# sudo apt install -y sshpass
+
+# Edit 2nd task - change file name
+
+# Add ansible.cfg
+
+# add another server, add 3rd task, add vars to new files and move them out of inventory
+
+# Add 4th and 5th tasks to show loops, register
+
+# Add databases and move server_2 there
+
+########## ROLE ##########
+
+# Add NTP role without templates and handlers, then add 6th task to call it
+
+########## HANDLER ##########
+
+# Add Handler in role
+
+########## TEMPLATE - move slide ##########
+
+# Add J2 template, add group vars ALL and change module in role tasks from file to template
+
+# Add different group vars for packages to install, add another role to install packages, add play targeting database servers
+
+# Add Ansible vault example
+# echo "your_vault_password_here" > ./ansible/vault_pass
+# export ANSIBLE_VAULT_PASSWORD_FILE=./ansible/vault_pass
+# ansible-vault encrypt_string '<string_to_encrypt>' --name 'ansible_password'
+
+# Add Ansible password example using env variables
+# export ANSIBLE_PASSWORD='SuperSecret'
+# ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+
+# Ansible secrets from Key Vault - show excalidraw
+
+# Show other projects briefly, mainly the difference in project layout
+
+# Debug: show playbook for debugging
+
+# Ask Zdenek to introduce AWX - an orchestration platform, you can use it to run, schedule and manage Ansible playbooks from one central point

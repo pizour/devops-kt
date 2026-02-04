@@ -1,0 +1,132 @@
+---
+# System Information Gathering Playbook
+# Demonstrates: facts, debugging, conditionals, register
+#
+# Usage:
+#   ansible-playbook -i dev/hosts gather-system-info.yml
+
+- name: Gather comprehensive system information
+  hosts: all
+  gather_facts: yes
+  
+  tasks:
+    - name: Display system information
+      ansible.builtin.debug:
+        msg: |
+          === System Information for {{ hostname }} ===
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Architecture: {{ ansible_architecture }}
+          Python: {{ ansible_python_version }}
+          Memory: {{ ansible_memtotal_mb }} MB
+          CPUs: {{ ansible_processor_vcpus }}
+          IP Address: {{ ansible_default_ipv4.address | default('N/A') }}
+      tags: ['info', 'system']
+    
+    - name: Display environment configuration
+      ansible.builtin.debug:
+        msg: |
+          === Environment Configuration ===
+          Environment: {{ environment }} ({{ env_short }})
+          Server Role: {{ server_role }}
+          Hostname: {{ hostname }}
+          Description: {{ host_description | default('N/A') }}
+      tags: ['info', 'config']
+    
+    - name: Check disk space
+      ansible.builtin.command: df -h /
+      register: disk_space
+      changed_when: false
+      tags: ['info', 'disk']
+    
+    - name: Display disk usage
+      ansible.builtin.debug:
+        var: disk_space.stdout_lines
+      tags: ['info', 'disk']
+    
+    - name: Check memory usage
+      ansible.builtin.command: free -h
+      register: memory_usage
+      changed_when: false
+      tags: ['info', 'memory']
+    
+    - name: Display memory usage
+      ansible.builtin.debug:
+        var: memory_usage.stdout_lines
+      tags: ['info', 'memory']
+    
+    - name: Get running services count
+      ansible.builtin.shell: systemctl list-units --type=service --state=running | grep -c '\.service'
+      register: service_count
+      changed_when: false
+      failed_when: false
+      tags: ['info', 'services']
+    
+    - name: Display service count
+      ansible.builtin.debug:
+        msg: "Running services: {{ service_count.stdout }}"
+      tags: ['info', 'services']
+    
+    - name: Check for Fossology installation
+      ansible.builtin.stat:
+        path: "{{ fossology_install_dir }}"
+      register: fossology_check
+      when: "'fossology' in group_names"
+      tags: ['info', 'fossology']
+    
+    - name: Display Fossology status
+      ansible.builtin.debug:
+        msg: "Fossology: {{ 'Installed' if fossology_check.stat.exists | default(false) else 'Not installed' }}"
+      when: "'fossology' in group_names"
+      tags: ['info', 'fossology']
+    
+    - name: Create system report
+      ansible.builtin.copy:
+        content: |
+          System Report: {{ hostname }}
+          ================================
+          Generated: {{ ansible_date_time.iso8601 }}
+          
+          Environment: {{ environment }} ({{ env_short }})
+          Server Role: {{ server_role }}
+          
+          System:
+          - OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          - Kernel: {{ ansible_kernel }}
+          - Uptime: {{ ansible_uptime_seconds // 3600 }} hours
+          
+          Hardware:
+          - Memory: {{ ansible_memtotal_mb }} MB
+          - CPUs: {{ ansible_processor_vcpus }}
+          - Architecture: {{ ansible_architecture }}
+          
+          Network:
+          - IP: {{ ansible_default_ipv4.address | default('N/A') }}
+          - Hostname: {{ ansible_hostname }}
+          
+          Configuration:
+          - Log Level: {{ app_log_level }}
+          - Backup Enabled: {{ backup_enabled }}
+          - Firewall: {{ firewall_enabled }}
+        dest: "/tmp/{{ hostname }}-report.txt"
+      tags: ['report']
+
+- name: Compare environments
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Show environment differences
+      ansible.builtin.debug:
+        msg: |
+          {{ hostname }} is in {{ environment }} environment
+          {% if environment == 'production' %}
+          - Higher resources allocated
+          - Stricter security settings
+          - Extended backup retention
+          {% else %}
+          - Development settings
+          - Debug mode may be enabled
+          - Lower resource allocation
+          {% endif %}
+      tags: ['comparison']

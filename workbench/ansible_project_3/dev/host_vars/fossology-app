@@ -1,0 +1,48 @@
+---
+# Host-specific variables for fossology-app in DEV
+# Main Fossology application server for development
+
+hostname: fossology-app-dev
+host_description: "Fossology application server - Development"
+
+# Network configuration
+private_ip: 10.20.191.10
+interface: eth0
+
+# Resource allocation (dev has lower resources)
+memory_limit: "4GB"
+cpu_cores: 4
+disk_size: "100GB"
+data_disk_size: "200GB"
+
+# Application configuration
+fossology_role: standalone  # All-in-one in dev
+fossology_workers: 4
+fossology_max_upload_size: "500M"
+
+# Database settings (local)
+db_host: localhost
+db_backup_enabled: true
+db_backup_schedule: "0 2 * * *"  # Daily at 2 AM
+
+# Web server
+web_workers: 4
+web_max_connections: 100
+
+# Development-specific settings
+debug_enabled: true
+error_reporting: "E_ALL"
+display_errors: true
+xdebug_enabled: false  # Enable manually when needed
+
+# Test data
+load_sample_data: true
+test_mode: true
+
+# Monitoring
+health_check_url: "http://10.20.191.10/health"
+metrics_enabled: true
+
+# Backup
+backup_schedule: "0 3 * * *"
+backup_destination: "/backup/fossology-dev"

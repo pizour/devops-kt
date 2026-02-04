@@ -1,0 +1,38 @@
+---
+# Group variables for bastion hosts in DEV environment
+# Bastion servers act as jump hosts for secure access
+
+# Role identification
+server_role: bastion
+server_purpose: "SSH jump host and gateway"
+
+# Security settings specific to bastion
+ssh_max_sessions: 10
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 3
+allow_tcp_forwarding: true
+allow_agent_forwarding: true
+
+# Bastion-specific packages
+bastion_packages:
+  - fail2ban
+  - tcpdump
+  - netcat
+  - screen
+  - tmux
+
+# Logging and auditing
+audit_enabled: true
+log_all_sessions: true
+session_log_dir: "/var/log/bastion-sessions"
+
+# Firewall rules for bastion
+allowed_ssh_sources:
+  - "0.0.0.0/0"  # Open in dev (restrict in prod)
+
+# Resource limits
+max_logins: 5
+max_cpu_usage: "80%"
+
+# Monitoring
+bastion_health_check_port: 22

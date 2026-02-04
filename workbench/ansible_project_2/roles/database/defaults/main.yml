@@ -1,0 +1,6 @@
+---
+# Default variables for database role
+postgresql_version: "14"
+db_name: appdb
+db_user: appuser
+db_password: changeme

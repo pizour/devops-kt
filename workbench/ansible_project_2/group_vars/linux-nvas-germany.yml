@@ -1,0 +1,24 @@
+---
+# Group variables for Germany region NVAs
+# These variables apply to all hosts in the 'linux-nvas-germany' group
+
+# Region-specific settings
+region: "germany"
+data_center: "eu-central"
+timezone: "Europe/Berlin"
+
+# Network configuration
+dns_servers:
+  - "10.190.0.10"
+  - "10.190.0.11"
+ntp_servers:
+  - "de.pool.ntp.org"
+  - "europe.pool.ntp.org"
+
+# Monitoring settings
+monitoring_endpoint: "https://monitor-de.example.com"
+log_server: "10.190.1.100"
+
+# Application settings
+app_environment: "production"
+max_connections: 1000

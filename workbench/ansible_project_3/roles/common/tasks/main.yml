@@ -1,0 +1,138 @@
+---
+# Common role - Base configuration for all servers
+# Demonstrates: package management, users, directories, facts
+
+- name: Set system hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+  when: hostname is defined
+  tags:
+    - common
+    - hostname
+
+- name: Update /etc/hosts with hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^127\\.0\\.1\\.1"
+    line: "127.0.1.1 {{ hostname }}"
+    state: present
+  when: hostname is defined
+  tags:
+    - common
+    - hostname
+
+- name: Update apt cache (Debian/Ubuntu)
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+  tags:
+    - common
+    - packages
+
+- name: Install common packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+  tags:
+    - common
+    - packages
+
+- name: Create standard directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/scripts
+    - /opt/backups
+    - /var/log/applications
+    - /opt/monitoring
+  tags:
+    - common
+    - directories
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone | default('UTC') }}"
+  tags:
+    - common
+    - timezone
+
+- name: Configure system-wide environment variables
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  loop:
+    - { key: 'ENVIRONMENT', value: "{{ environment }}" }
+    - { key: 'ENV_SHORT', value: "{{ env_short }}" }
+  tags:
+    - common
+    - environment
+
+- name: Create custom MOTD
+  ansible.builtin.copy:
+    content: |
+      ================================================================
+      System: {{ hostname }}
+      Environment: {{ environment | upper }}
+      Role: {{ server_role | default('general') }}
+      
+      {{ host_description | default('Managed by Ansible') }}
+      ================================================================
+      
+    dest: /etc/motd
+    mode: '0644'
+  tags:
+    - common
+    - motd
+
+- name: Ensure NTP is installed and running
+  block:
+    - name: Install chrony
+      ansible.builtin.package:
+        name: chrony
+        state: present
+    
+    - name: Ensure chrony is running
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: yes
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+  tags:
+    - common
+    - ntp
+
+- name: Create health check script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Health check script for {{ hostname }}
+      # Environment: {{ environment }}
+      
+      echo "=== System Health Check ==="
+      echo "Hostname: $(hostname)"
+      echo "Date: $(date)"
+      echo "Uptime: $(uptime -p)"
+      echo "Load Average: $(uptime | awk -F'load average:' '{print $2}')"
+      echo "Memory Usage: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
+      echo "Disk Usage (/):" $(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')"
+      echo "==========================="
+    dest: /opt/scripts/health-check.sh
+    mode: '0755'
+  tags:
+    - common
+    - monitoring
+
+- name: Display system information
+  ansible.builtin.debug:
+    msg: |
+      Configured {{ hostname }} in {{ environment }} environment
+      OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+      IP: {{ ansible_default_ipv4.address | default('N/A') }}
+  tags:
+    - common
+    - info

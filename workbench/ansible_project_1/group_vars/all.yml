@@ -1,0 +1,5 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+ntp_servers:
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org

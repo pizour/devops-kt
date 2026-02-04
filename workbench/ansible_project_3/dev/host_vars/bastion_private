@@ -1,0 +1,32 @@
+---
+# Host-specific variables for bastion_private in DEV
+# This is the private bastion accessible only from internal network
+
+hostname: bastion-private-dev
+host_description: "Private bastion host for development environment"
+
+# Network configuration
+interface_private: eth0
+private_ip: 10.120.11.20
+
+# Resource allocation
+memory_limit: "2GB"
+cpu_cores: 2
+disk_size: "50GB"
+
+# Bastion-specific settings
+bastion_type: private
+access_level: internal
+allow_public_access: false
+
+# SSH configuration
+ssh_banner_text: "DEV Private Bastion - Authorized Access Only"
+ssh_max_auth_tries: 3
+
+# Monitoring
+health_check_enabled: true
+metrics_port: 9100
+
+# Maintenance window
+maintenance_day: "Sunday"
+maintenance_hour: 3

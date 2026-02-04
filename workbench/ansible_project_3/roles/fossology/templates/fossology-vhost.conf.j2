@@ -1,0 +1,55 @@
+<VirtualHost *:{{ web_server_port }}>
+    ServerName {{ hostname }}
+    ServerAdmin admin@{{ hostname }}
+    
+    DocumentRoot {{ fossology_install_dir }}/www
+    
+    <Directory {{ fossology_install_dir }}/www>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    # Fossology upload directory
+    Alias /repo {{ fossology_repo_dir }}
+    <Directory {{ fossology_repo_dir }}>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+    
+    # PHP settings
+    php_value upload_max_filesize {{ php_upload_max_filesize }}
+    php_value post_max_size {{ php_post_max_size }}
+    php_value memory_limit {{ php_memory_limit }}
+    php_value max_execution_time {{ php_max_execution_time }}
+    
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/fossology_error.log
+    CustomLog ${APACHE_LOG_DIR}/fossology_access.log combined
+    
+    # Environment
+    SetEnv FOSSOLOGY_ENV {{ environment }}
+</VirtualHost>
+
+{% if ssl_enabled | default(false) %}
+<VirtualHost *:{{ web_server_ssl_port }}>
+    ServerName {{ hostname }}
+    ServerAdmin admin@{{ hostname }}
+    
+    DocumentRoot {{ fossology_install_dir }}/www
+    
+    SSLEngine on
+    SSLCertificateFile {{ ssl_cert_path | default('/etc/ssl/certs/ssl-cert-snakeoil.pem') }}
+    SSLCertificateKeyFile {{ ssl_key_path | default('/etc/ssl/private/ssl-cert-snakeoil.key') }}
+    
+    <Directory {{ fossology_install_dir }}/www>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/fossology_ssl_error.log
+    CustomLog ${APACHE_LOG_DIR}/fossology_ssl_access.log combined
+</VirtualHost>
+{% endif %}

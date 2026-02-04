@@ -1,0 +1,33 @@
+---
+# These variables are applied to all of the target nodes defined in inventories/hosts.yml file.
+# This demonstrates Ansible's variable precedence - these are the lowest priority
+
+# Connection settings
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+ansible_become: true
+ansible_become_method: sudo
+ansible_connection: ssh
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: admin
+
+# Common packages to install on all systems
+common_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - net-tools
+
+# Security settings
+ssh_port: 22
+firewall_enabled: true
+
+# Application defaults (can be overridden by group_vars or host_vars)
+app_version: "1.0.0"
+app_port: 8080
+app_user: appuser
+app_group: appgroup
+
+# Backup configuration
+backup_enabled: true
+backup_retention_days: 7

@@ -1,0 +1,30 @@
+---
+- name: Install NTP package
+  ansible.builtin.apt:
+    name: ntp
+    state: present
+    update_cache: true
+
+- name: Configure NTP servers
+  ansible.builtin.copy:
+    src: ./files/ntp.conf
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart ntp
+
+# - name: Configure NTP servers
+#   ansible.builtin.template:
+#     src: ntp.conf.j2
+#     dest: /etc/ntp.conf
+#     owner: root
+#     group: root
+#     mode: '0644'
+#   notify: Restart ntp
+
+- name: Ensure NTP service is running
+  ansible.builtin.service:
+    name: ntp
+    state: started
+    enabled: true

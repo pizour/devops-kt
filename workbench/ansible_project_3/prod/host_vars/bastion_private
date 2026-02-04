@@ -1,0 +1,42 @@
+---
+# Host-specific variables for bastion_private in PRODUCTION
+# Production private bastion with enhanced security and monitoring
+
+hostname: bastion-private-prod
+host_description: "Private bastion host for production environment"
+
+# Network configuration
+interface_private: eth0
+private_ip: 10.210.159.120
+
+# Resource allocation (more resources in prod)
+memory_limit: "4GB"
+cpu_cores: 4
+disk_size: "100GB"
+
+# Bastion-specific settings
+bastion_type: private
+access_level: internal
+allow_public_access: false
+high_availability: true
+
+# SSH configuration (stricter in prod)
+ssh_banner_text: "PRODUCTION Private Bastion - Authorized Access Only - All actions are logged"
+ssh_max_auth_tries: 2
+ssh_login_grace_time: 30
+
+# Security (enhanced for production)
+audit_logging: true
+session_recording: true
+two_factor_auth: false  # Set to true if MFA is configured
+
+# Monitoring and alerting
+health_check_enabled: true
+metrics_port: 9100
+alert_on_login: true
+alert_on_suspicious_activity: true
+log_aggregation_enabled: true
+
+# Maintenance window
+maintenance_day: "Sunday"
+maintenance_hour: 2

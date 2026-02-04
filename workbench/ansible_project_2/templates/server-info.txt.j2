@@ -1,0 +1,33 @@
+Server Information for {{ hostname }}
+====================================
+
+Deployment Date: {{ ansible_date_time.date }}
+Deployment Time: {{ ansible_date_time.time }}
+
+System Information:
+  - Hostname: {{ ansible_hostname }}
+  - Operating System: {{ ansible_distribution }} {{ ansible_distribution_version }}
+  - Kernel: {{ ansible_kernel }}
+  - Architecture: {{ ansible_architecture }}
+  - Python Version: {{ ansible_python_version }}
+
+Hardware Information:
+  - Total Memory: {{ ansible_memtotal_mb }} MB
+  - CPU Cores: {{ ansible_processor_vcpus }}
+  - CPU Model: {{ ansible_processor[2] | default('N/A') }}
+
+Network Information:
+  - IP Address: {{ ansible_default_ipv4.address }}
+  - Network Interface: {{ ansible_default_ipv4.interface }}
+
+Configuration:
+  - Region: {{ region }}
+  - Data Center: {{ data_center }}
+  - Environment: {{ app_environment }}
+  - Host Role: {{ host_role }}
+  - Timezone: {{ timezone }}
+
+Services:
+  - Webserver Enabled: {{ webserver_enabled | default(false) }}
+  - Database Role: {{ database_role | default('Not configured') }}
+  - Backup Enabled: {{ backup_enabled | default(true) }}

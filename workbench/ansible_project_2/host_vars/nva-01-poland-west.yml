@@ -1,0 +1,29 @@
+---
+# Host-specific variables for nva-01-poland-west
+
+# Host identification
+hostname: nva-01-poland-west
+host_role: primary
+
+# Resource allocation
+memory_limit: "6GB"
+cpu_cores: 3
+
+# Service-specific configuration
+webserver_enabled: true
+webserver_port: 8080  # Custom port for staging
+ssl_enabled: true
+ssl_port: 8443
+
+# Database configuration
+database_role: primary
+database_port: 5432
+max_connections: 150
+
+# Staging-specific settings
+app_environment: "staging"  # Overrides group value if needed
+debug_mode: true
+
+# Backup schedule
+backup_schedule: "0 1 * * *"
+backup_destination: "/backup/nva-01-poland"

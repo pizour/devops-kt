@@ -1,0 +1,26 @@
+---
+# Host-specific variables for nva-01-germany-central
+# These variables have the highest precedence and override group_vars and all.yml
+
+# Host identification
+hostname: nva-01-germany-central
+host_role: primary
+
+# Resource allocation (specific to this host's capacity)
+memory_limit: "8GB"
+cpu_cores: 4
+
+# Service-specific configuration
+webserver_enabled: true
+webserver_port: 80
+ssl_enabled: true
+ssl_port: 443
+
+# This host serves as database primary
+database_role: primary
+database_port: 5432
+max_connections: 200  # Overrides group_vars value
+
+# Backup schedule (specific to this host)
+backup_schedule: "0 2 * * *"  # Daily at 2 AM
+backup_destination: "/backup/nva-01"

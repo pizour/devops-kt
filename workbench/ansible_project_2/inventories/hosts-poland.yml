@@ -1,0 +1,10 @@
+# These groups are used in Playbooks to define the target nodes for the run.
+# Nodes for the other Azure region are listed in another hosts file.
+all:
+  children:
+    linux-nvas-poland:
+      hosts:
+        nva-01-poland-west:
+          ansible_host: 10.10.15.21
+        nva-02-poland-central:
+          ansible_host: 10.10.15.22

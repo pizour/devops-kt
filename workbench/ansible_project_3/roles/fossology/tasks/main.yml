@@ -1,0 +1,234 @@
+---
+# Fossology role - Install and configure Fossology application
+# Demonstrates: complex application deployment, database setup, web server config
+
+- name: Install Fossology dependencies
+  ansible.builtin.package:
+    name:
+      - apache2
+      - postgresql
+      - postgresql-contrib
+      - php
+      - php-pgsql
+      - php-xml
+      - php-mbstring
+      - php-zip
+      - php-curl
+      - libapache2-mod-php
+      - git
+      - make
+      - gcc
+      - libpq-dev
+    state: present
+  when: ansible_os_family == "Debian"
+  tags:
+    - fossology
+    - packages
+
+- name: Create Fossology directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  loop:
+    - "{{ fossology_install_dir }}"
+    - "{{ fossology_data_dir }}"
+    - "{{ fossology_repo_dir }}"
+  tags:
+    - fossology
+    - directories
+
+- name: Configure PHP for Fossology
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{ php_version }}/apache2/php.ini"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: 'memory_limit', value: "{{ php_memory_limit }}" }
+    - { key: 'upload_max_filesize', value: "{{ php_upload_max_filesize }}" }
+    - { key: 'post_max_size', value: "{{ php_post_max_size }}" }
+    - { key: 'max_execution_time', value: "{{ php_max_execution_time }}" }
+  notify: restart apache2
+  tags:
+    - fossology
+    - php
+
+- name: Enable required Apache modules
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - rewrite
+    - php{{ php_version | replace('.', '') }}
+  notify: restart apache2
+  tags:
+    - fossology
+    - apache
+
+- name: Configure Apache virtual host for Fossology
+  ansible.builtin.template:
+    src: fossology-vhost.conf.j2
+    dest: /etc/apache2/sites-available/fossology.conf
+    mode: '0644'
+  notify: restart apache2
+  tags:
+    - fossology
+    - apache
+
+- name: Enable Fossology site
+  ansible.builtin.command:
+    cmd: a2ensite fossology
+    creates: /etc/apache2/sites-enabled/fossology.conf
+  notify: restart apache2
+  tags:
+    - fossology
+    - apache
+
+- name: Disable default Apache site
+  ansible.builtin.command:
+    cmd: a2dissite 000-default
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  notify: restart apache2
+  tags:
+    - fossology
+    - apache
+
+- name: Ensure PostgreSQL is running
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: yes
+  tags:
+    - fossology
+    - database
+
+- name: Create Fossology database
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    state: present
+  become_user: postgres
+  tags:
+    - fossology
+    - database
+
+- name: Create Fossology database user
+  community.postgresql.postgresql_user:
+    name: "{{ db_user }}"
+    password: "changeme"  # Should use vault in production
+    state: present
+  become_user: postgres
+  tags:
+    - fossology
+    - database
+
+- name: Grant privileges to Fossology user
+  community.postgresql.postgresql_privs:
+    database: "{{ db_name }}"
+    roles: "{{ db_user }}"
+    privs: ALL
+    type: database
+  become_user: postgres
+  tags:
+    - fossology
+    - database
+
+- name: Configure PostgreSQL for Fossology
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/*/main/postgresql.conf
+    regexp: "^#?{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: 'max_connections', value: "{{ db_max_connections }}" }
+    - { key: 'shared_buffers', value: "{{ db_shared_buffers }}" }
+  notify: restart postgresql
+  tags:
+    - fossology
+    - database
+
+- name: Create Fossology configuration file
+  ansible.builtin.template:
+    src: fossology.conf.j2
+    dest: "{{ fossology_install_dir }}/fossology.conf"
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  tags:
+    - fossology
+    - config
+
+- name: Create Fossology scheduler service
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Fossology Scheduler
+      After=postgresql.service
+      
+      [Service]
+      Type=simple
+      User=www-data
+      Group=www-data
+      ExecStart=/usr/local/bin/fossology-scheduler
+      Restart=on-failure
+      
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/fossology-scheduler.service
+    mode: '0644'
+  when: fossology_scheduler_workers is defined
+  notify: restart fossology-scheduler
+  tags:
+    - fossology
+    - service
+
+- name: Create backup script for Fossology
+  ansible.builtin.template:
+    src: fossology-backup.sh.j2
+    dest: /opt/scripts/fossology-backup.sh
+    mode: '0750'
+  when: backup_database | default(false)
+  tags:
+    - fossology
+    - backup
+
+- name: Configure Fossology backup cron job
+  ansible.builtin.cron:
+    name: "Fossology backup"
+    minute: "{{ (backup_schedule.split()[0] if backup_schedule is defined else '0') }}"
+    hour: "{{ (backup_schedule.split()[1] if backup_schedule is defined else '3') }}"
+    job: "/opt/scripts/fossology-backup.sh"
+    user: root
+    state: present
+  when:
+    - backup_schedule is defined
+    - backup_database | default(false)
+  tags:
+    - fossology
+    - backup
+
+- name: Ensure Apache is running
+  ansible.builtin.service:
+    name: apache2
+    state: started
+    enabled: yes
+  tags:
+    - fossology
+    - service
+
+- name: Display Fossology configuration
+  ansible.builtin.debug:
+    msg: |
+      Fossology configured on {{ hostname }}:
+      - Install Directory: {{ fossology_install_dir }}
+      - Data Directory: {{ fossology_data_dir }}
+      - Database: {{ db_name }}
+      - Web Server: Apache2 on port {{ web_server_port }}
+      - SSL Enabled: {{ ssl_enabled | default(false) }}
+      - Debug Mode: {{ fossology_debug_mode | default(false) }}
+      - Workers: {{ fossology_scheduler_workers | default('N/A') }}
+  tags:
+    - fossology
+    - info

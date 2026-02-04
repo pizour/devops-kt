@@ -1,0 +1,174 @@
+---
+# Security hardening role
+# Demonstrates: security best practices, firewall, fail2ban, SSH hardening
+
+- name: Install security packages
+  ansible.builtin.package:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  when: ansible_os_family == "Debian"
+  tags:
+    - security
+    - packages
+
+- name: Configure SSH hardening
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  loop:
+    - { key: 'PermitRootLogin', value: 'no' }
+    - { key: 'PasswordAuthentication', value: 'no' }
+    - { key: 'PubkeyAuthentication', value: 'yes' }
+    - { key: 'X11Forwarding', value: 'no' }
+    - { key: 'MaxAuthTries', value: '3' }
+    - { key: 'ClientAliveInterval', value: '300' }
+    - { key: 'ClientAliveCountMax', value: '2' }
+  notify: restart sshd
+  tags:
+    - security
+    - ssh
+
+- name: Create SSH banner
+  ansible.builtin.copy:
+    content: |
+      {{ ssh_banner_text | default('Authorized access only. All activity is monitored and logged.') }}
+      
+    dest: /etc/ssh/banner
+    mode: '0644'
+  when: ssh_banner_text is defined
+  notify: restart sshd
+  tags:
+    - security
+    - ssh
+
+- name: Enable SSH banner
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Banner'
+    line: 'Banner /etc/ssh/banner'
+    state: present
+  when: ssh_banner_text is defined
+  notify: restart sshd
+  tags:
+    - security
+    - ssh
+
+- name: Configure fail2ban for SSH
+  block:
+    - name: Create fail2ban SSH jail configuration
+      ansible.builtin.copy:
+        content: |
+          [sshd]
+          enabled = true
+          port = {{ ssh_port | default(22) }}
+          filter = sshd
+          logpath = /var/log/auth.log
+          maxretry = {{ fail2ban_maxretry | default(3) }}
+          bantime = {{ fail2ban_bantime | default(3600) }}
+          findtime = {{ fail2ban_findtime | default(600) }}
+        dest: /etc/fail2ban/jail.d/sshd.conf
+        mode: '0644'
+      notify: restart fail2ban
+    
+    - name: Ensure fail2ban is running
+      ansible.builtin.service:
+        name: fail2ban
+        state: started
+        enabled: yes
+  when: fail2ban_enabled | default(false)
+  tags:
+    - security
+    - fail2ban
+
+- name: Configure UFW firewall
+  block:
+    - name: Set UFW default policies
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+    
+    - name: Allow SSH through firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ ssh_port | default('22') }}"
+        proto: tcp
+    
+    - name: Allow monitoring port
+      community.general.ufw:
+        rule: allow
+        port: "{{ monitoring_port }}"
+        proto: tcp
+      when: monitoring_port is defined
+    
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+  when: firewall_enabled | default(false)
+  tags:
+    - security
+    - firewall
+
+- name: Configure automatic security updates
+  block:
+    - name: Set up unattended-upgrades
+      ansible.builtin.copy:
+        content: |
+          Unattended-Upgrade::Allowed-Origins {
+              "${distro_id}:${distro_codename}-security";
+          };
+          Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+          Unattended-Upgrade::Remove-Unused-Dependencies "true";
+          Unattended-Upgrade::Automatic-Reboot "false";
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        mode: '0644'
+    
+    - name: Enable automatic updates
+      ansible.builtin.copy:
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Download-Upgradeable-Packages "1";
+          APT::Periodic::AutocleanInterval "7";
+          APT::Periodic::Unattended-Upgrade "1";
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: '0644'
+  when:
+    - auto_security_updates | default(false)
+    - ansible_os_family == "Debian"
+  tags:
+    - security
+    - updates
+
+- name: Set secure file permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: '/etc/passwd', mode: '0644' }
+    - { path: '/etc/shadow', mode: '0640' }
+    - { path: '/etc/group', mode: '0644' }
+    - { path: '/etc/gshadow', mode: '0640' }
+  tags:
+    - security
+    - permissions
+
+- name: Display security configuration summary
+  ansible.builtin.debug:
+    msg: |
+      Security hardening applied:
+      - SSH hardening: enabled
+      - Fail2ban: {{ 'enabled' if fail2ban_enabled | default(false) else 'disabled' }}
+      - Firewall (UFW): {{ 'enabled' if firewall_enabled | default(false) else 'disabled' }}
+      - Auto security updates: {{ 'enabled' if auto_security_updates | default(false) else 'disabled' }}
+  tags:
+    - security
+    - info

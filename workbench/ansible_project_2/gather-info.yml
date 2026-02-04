@@ -1,0 +1,126 @@
+---
+# Information Gathering Playbook
+# This playbook demonstrates: gathering facts, debug module, register, set_fact
+#
+# Usage:
+#   ansible-playbook -i inventories/hosts-germany.yml gather-info.yml
+
+- name: Gather and display system information
+  hosts: all
+  gather_facts: yes
+  become: no
+  
+  tasks:
+    - name: Display basic system information
+      ansible.builtin.debug:
+        msg: |
+          === System Information ===
+          Hostname: {{ ansible_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Architecture: {{ ansible_architecture }}
+          Python version: {{ ansible_python_version }}
+          Total memory: {{ ansible_memtotal_mb }} MB
+          CPU cores: {{ ansible_processor_vcpus }}
+      tags: ['info', 'system']
+    
+    - name: Display network information
+      ansible.builtin.debug:
+        msg: |
+          === Network Information ===
+          IP address: {{ ansible_default_ipv4.address }}
+          Gateway: {{ ansible_default_ipv4.gateway }}
+          Interface: {{ ansible_default_ipv4.interface }}
+          DNS servers: {{ ansible_dns.nameservers | join(', ') }}
+      when: ansible_default_ipv4 is defined
+      tags: ['info', 'network']
+    
+    - name: Display custom variables
+      ansible.builtin.debug:
+        msg: |
+          === Configuration Variables ===
+          Region: {{ region }}
+          Data Center: {{ data_center }}
+          Environment: {{ app_environment }}
+          Host Role: {{ host_role }}
+          Timezone: {{ timezone }}
+      tags: ['info', 'vars']
+    
+    - name: Check disk usage
+      ansible.builtin.command: df -h /
+      register: disk_usage
+      changed_when: false
+      tags: ['info', 'disk']
+    
+    - name: Display disk usage
+      ansible.builtin.debug:
+        var: disk_usage.stdout_lines
+      tags: ['info', 'disk']
+    
+    - name: Get current date and time
+      ansible.builtin.setup:
+        filter: ansible_date_time
+      tags: ['info', 'time']
+    
+    - name: Display date/time information
+      ansible.builtin.debug:
+        msg: |
+          Current time: {{ ansible_date_time.time }}
+          Current date: {{ ansible_date_time.date }}
+          ISO 8601: {{ ansible_date_time.iso8601 }}
+          Timezone: {{ ansible_date_time.tz }}
+      tags: ['info', 'time']
+    
+    - name: Check if services are installed
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      register: service_check
+      loop:
+        - { name: 'nginx', path: '/usr/sbin/nginx' }
+        - { name: 'postgresql', path: '/usr/bin/postgres' }
+      tags: ['info', 'services']
+    
+    - name: Display service installation status
+      ansible.builtin.debug:
+        msg: "{{ item.item.name }}: {{ 'installed' if item.stat.exists else 'not installed' }}"
+      loop: "{{ service_check.results }}"
+      tags: ['info', 'services']
+    
+    - name: Create server inventory report
+      ansible.builtin.set_fact:
+        server_report:
+          hostname: "{{ hostname }}"
+          region: "{{ region }}"
+          environment: "{{ app_environment }}"
+          role: "{{ host_role }}"
+          ip: "{{ ansible_host }}"
+          os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+          memory: "{{ ansible_memtotal_mb }} MB"
+          cpu: "{{ ansible_processor_vcpus }} cores"
+      tags: ['report']
+    
+    - name: Display server report
+      ansible.builtin.debug:
+        var: server_report
+      tags: ['report']
+    
+    - name: Save server report to file
+      ansible.builtin.copy:
+        content: "{{ server_report | to_nice_yaml }}"
+        dest: "/tmp/{{ hostname }}-report.yml"
+      tags: ['report']
+
+- name: Compare servers
+  hosts: all
+  gather_facts: yes
+  
+  tasks:
+    - name: Group servers by environment
+      ansible.builtin.group_by:
+        key: "env_{{ app_environment }}"
+      tags: ['grouping']
+    
+    - name: Display environment groups
+      ansible.builtin.debug:
+        msg: "This server belongs to {{ app_environment }} environment"
+      tags: ['grouping']

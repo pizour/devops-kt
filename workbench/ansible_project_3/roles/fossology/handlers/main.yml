@@ -1,0 +1,16 @@
+---
+- name: restart apache2
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: restart postgresql
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted
+
+- name: restart fossology-scheduler
+  ansible.builtin.systemd:
+    name: fossology-scheduler
+    state: restarted
+    daemon_reload: yes

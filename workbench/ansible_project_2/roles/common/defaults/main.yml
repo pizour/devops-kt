@@ -1,0 +1,11 @@
+---
+# Default variables for common role
+# These have the lowest precedence and can be overridden
+
+common_packages_default:
+  - curl
+  - wget
+  - vim
+
+app_user_default: appuser
+app_group_default: appgroup

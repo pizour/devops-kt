@@ -1,0 +1,52 @@
+---
+# Group variables for Fossology application servers in PRODUCTION
+# Production configuration with enhanced performance and security
+
+# Role identification
+server_role: application
+app_name: fossology
+app_version: "4.3.0"
+
+# Application configuration
+fossology_install_dir: "/opt/fossology"
+fossology_data_dir: "/srv/fossology"
+fossology_repo_dir: "/srv/fossology/repository"
+
+# Database configuration (production specs)
+db_host: localhost
+db_port: 5432
+db_name: fossology
+db_user: fossy
+db_max_connections: 200  # Higher than dev
+db_shared_buffers: "512MB"  # More memory
+
+# Web server configuration
+web_server: apache2
+web_server_port: 80
+web_server_ssl_port: 443
+ssl_enabled: true  # Enabled in production
+ssl_cert_path: "/etc/ssl/certs/fossology.crt"
+ssl_key_path: "/etc/ssl/private/fossology.key"
+
+# PHP configuration (production optimized)
+php_version: "8.1"
+php_memory_limit: "1024M"  # More memory than dev
+php_upload_max_filesize: "700M"
+php_post_max_size: "701M"
+php_max_execution_time: 600
+php_opcache_enabled: true
+
+# Application-specific settings
+fossology_scheduler_workers: 8  # More workers in prod
+fossology_agent_enabled: true
+fossology_debug_mode: false  # Disabled in production
+
+# Performance tuning
+fossology_cache_enabled: true
+fossology_cache_size: "1G"
+
+# Backup settings (comprehensive)
+backup_database: true
+backup_repository: true
+backup_retention: 30  # Longer retention
+backup_offsite: true

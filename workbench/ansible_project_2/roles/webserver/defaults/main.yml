@@ -1,0 +1,4 @@
+---
+# Default variables for webserver role
+webserver_port_default: 80
+ssl_enabled_default: false

@@ -1,0 +1,43 @@
+---
+# Global variables for all hosts in DEV environment
+# These have the lowest precedence and can be overridden by group or host vars
+
+# Environment identification
+environment: "development"
+env_short: "dev"
+
+# SSH and connection settings
+ansible_user: ubuntu
+ansible_become: true
+ansible_become_method: sudo
+ansible_python_interpreter: /usr/bin/python3
+
+# Common packages for all servers
+common_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+  - net-tools
+  - jq
+
+# Monitoring and logging
+log_retention_days: 7
+metrics_enabled: true
+monitoring_port: 9100
+
+# Security settings
+firewall_enabled: true
+ssh_port: 22
+allow_password_auth: false
+
+# Application defaults
+app_log_level: "debug"  # More verbose in dev
+app_timeout: 300
+app_max_memory: "2G"
+
+# Backup configuration
+backup_enabled: true
+backup_hour: 2
+backup_minute: 30

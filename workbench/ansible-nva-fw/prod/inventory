@@ -1,0 +1,7 @@
+[nva_firewalls]
+nva-firewall-01 ansible_host=<VM_PUBLIC_IP_OR_HOSTNAME>
+
+[nva_firewalls:vars]
+ansible_become=yes
+ansible_become_method=sudo
+ansible_python_interpreter=/usr/bin/python3

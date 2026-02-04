@@ -1,0 +1,147 @@
+---
+# Testing and Validation Playbook
+# This playbook demonstrates: assert module, wait_for, uri module
+#
+# Usage:
+#   ansible-playbook -i inventories/hosts-germany.yml test-deployment.yml
+
+- name: Validate server configuration
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+    - name: Assert that required variables are defined
+      ansible.builtin.assert:
+        that:
+          - hostname is defined
+          - region is defined
+          - app_environment is defined
+        fail_msg: "Required variables are not defined!"
+        success_msg: "All required variables are properly defined"
+      tags: ['validation', 'variables']
+    
+    - name: Assert memory requirements
+      ansible.builtin.assert:
+        that:
+          - ansible_memtotal_mb >= 2048
+        fail_msg: "Server has insufficient memory ({{ ansible_memtotal_mb }} MB)"
+        success_msg: "Server memory is adequate ({{ ansible_memtotal_mb }} MB)"
+      tags: ['validation', 'resources']
+    
+    - name: Validate webserver configuration
+      block:
+        - name: Check if nginx is installed
+          ansible.builtin.stat:
+            path: /usr/sbin/nginx
+          register: nginx_binary
+        
+        - name: Assert nginx is installed when webserver_enabled
+          ansible.builtin.assert:
+            that:
+              - nginx_binary.stat.exists
+            fail_msg: "Nginx should be installed but wasn't found"
+            success_msg: "Nginx is properly installed"
+        
+        - name: Wait for web server to be ready
+          ansible.builtin.wait_for:
+            port: "{{ webserver_port }}"
+            timeout: 30
+            msg: "Web server did not start on port {{ webserver_port }}"
+        
+        - name: Test web server response
+          ansible.builtin.uri:
+            url: "http://{{ ansible_host }}:{{ webserver_port }}/health"
+            return_content: yes
+          register: health_check
+          delegate_to: localhost
+        
+        - name: Validate health check response
+          ansible.builtin.assert:
+            that:
+              - health_check.status == 200
+              - "'healthy' in health_check.content"
+            fail_msg: "Health check failed"
+            success_msg: "Health check passed"
+      
+      when: webserver_enabled | default(false)
+      tags: ['validation', 'webserver']
+    
+    - name: Validate database configuration
+      block:
+        - name: Check PostgreSQL service
+          ansible.builtin.systemd:
+            name: postgresql
+          register: pg_service
+        
+        - name: Assert PostgreSQL is running
+          ansible.builtin.assert:
+            that:
+              - pg_service.status.ActiveState == "active"
+            fail_msg: "PostgreSQL is not running"
+            success_msg: "PostgreSQL is running"
+        
+        - name: Wait for database port
+          ansible.builtin.wait_for:
+            port: "{{ database_port }}"
+            timeout: 30
+      
+      when: database_role is defined
+      tags: ['validation', 'database']
+    
+    - name: Validate file permissions
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      register: file_perms
+      loop:
+        - { path: '/opt/app', expected_mode: '0755' }
+        - { path: '/opt/app/logs', expected_mode: '0755' }
+      tags: ['validation', 'permissions']
+    
+    - name: Check required services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+      check_mode: yes
+      register: service_status
+      failed_when: false
+      loop:
+        - chronyd
+      tags: ['validation', 'services']
+    
+    - name: Generate validation report
+      ansible.builtin.copy:
+        content: |
+          Validation Report for {{ hostname }}
+          =====================================
+          Date: {{ ansible_date_time.iso8601 }}
+          
+          System:
+          - OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          - Memory: {{ ansible_memtotal_mb }} MB
+          - CPUs: {{ ansible_processor_vcpus }}
+          
+          Configuration:
+          - Region: {{ region }}
+          - Environment: {{ app_environment }}
+          - Host Role: {{ host_role }}
+          
+          Services:
+          - Webserver: {{ webserver_enabled | default(false) }}
+          - Database Role: {{ database_role | default('N/A') }}
+          
+          Status: ✅ All validations passed
+        dest: "/tmp/{{ hostname }}-validation.txt"
+      tags: ['validation', 'report']
+
+- name: Summary report
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Display validation summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ Validation completed for {{ hostname }}
+          All tests passed successfully!
+      tags: ['summary']

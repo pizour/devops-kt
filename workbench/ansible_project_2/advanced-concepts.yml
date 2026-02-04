@@ -1,0 +1,170 @@
+---
+# Advanced Ansible Concepts Playbook
+# This playbook demonstrates: blocks, error handling, delegation, serial execution
+#
+# Usage:
+#   ansible-playbook -i inventories/hosts-germany.yml advanced-concepts.yml
+
+- name: Demonstrate error handling with blocks
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+    - name: Try to perform risky operation
+      block:
+        - name: Attempt to install package that might not exist
+          ansible.builtin.package:
+            name: nonexistent-package-xyz
+            state: present
+          
+        - name: This won't run if above fails
+          ansible.builtin.debug:
+            msg: "Package installed successfully"
+      
+      rescue:
+        - name: Handle the error gracefully
+          ansible.builtin.debug:
+            msg: "⚠️  Package installation failed, but we handled it gracefully!"
+        
+        - name: Log the failure
+          ansible.builtin.lineinfile:
+            path: /tmp/ansible-errors.log
+            line: "{{ ansible_date_time.iso8601 }} - Package installation failed on {{ hostname }}"
+            create: yes
+      
+      always:
+        - name: This always runs regardless of success or failure
+          ansible.builtin.debug:
+            msg: "Block execution completed on {{ hostname }}"
+      
+      tags: ['error-handling']
+
+- name: Demonstrate delegation
+  hosts: all
+  gather_facts: yes
+  
+  tasks:
+    - name: Run command on localhost (delegation)
+      ansible.builtin.command: date
+      delegate_to: localhost
+      register: local_date
+      run_once: yes
+      tags: ['delegation']
+    
+    - name: Display delegated command result
+      ansible.builtin.debug:
+        msg: "Command ran on localhost at: {{ local_date.stdout }}"
+      run_once: yes
+      tags: ['delegation']
+    
+    - name: Create summary file on control node
+      ansible.builtin.copy:
+        content: |
+          Ansible Deployment Summary
+          ==========================
+          Deployment time: {{ ansible_date_time.iso8601 }}
+          Managed hosts: {{ groups['all'] | join(', ') }}
+          
+          Host Details:
+          {% for host in groups['all'] %}
+          - {{ hostvars[host].hostname }}: {{ hostvars[host].region }} ({{ hostvars[host].app_environment }})
+          {% endfor %}
+        dest: /tmp/deployment-summary.txt
+      delegate_to: localhost
+      run_once: yes
+      tags: ['delegation', 'summary']
+
+- name: Demonstrate serial execution
+  hosts: linux-nvas-germany
+  gather_facts: no
+  serial: 1  # Process one host at a time
+  
+  tasks:
+    - name: Rolling update simulation
+      ansible.builtin.debug:
+        msg: "Processing {{ hostname }} - waiting 5 seconds before next host..."
+      tags: ['serial']
+    
+    - name: Simulate deployment delay
+      ansible.builtin.pause:
+        seconds: 5
+      tags: ['serial']
+
+- name: Demonstrate conditionals and filters
+  hosts: all
+  gather_facts: yes
+  
+  vars:
+    server_list:
+      - { name: "server1", status: "active", port: 8080 }
+      - { name: "server2", status: "inactive", port: 8081 }
+      - { name: "server3", status: "active", port: 8082 }
+  
+  tasks:
+    - name: Process only active servers
+      ansible.builtin.debug:
+        msg: "{{ item.name }} is active on port {{ item.port }}"
+      loop: "{{ server_list }}"
+      when: item.status == "active"
+      tags: ['conditionals']
+    
+    - name: Use filters to transform data
+      ansible.builtin.debug:
+        msg: |
+          Uppercase hostname: {{ hostname | upper }}
+          Lowercase region: {{ region | lower }}
+          Default value example: {{ undefined_var | default('default_value') }}
+          Join DNS servers: {{ dns_servers | join(', ') }}
+      tags: ['filters']
+    
+    - name: Conditional based on multiple conditions
+      ansible.builtin.debug:
+        msg: "This is a production primary server in Germany"
+      when:
+        - app_environment == "production"
+        - host_role == "primary"
+        - region == "germany"
+      tags: ['conditionals']
+    
+    - name: Use register and conditionals
+      ansible.builtin.stat:
+        path: /etc/nginx/nginx.conf
+      register: nginx_conf
+      tags: ['register']
+    
+    - name: Act based on registered variable
+      ansible.builtin.debug:
+        msg: "Nginx is configured on this server"
+      when: nginx_conf.stat.exists
+      tags: ['register']
+
+- name: Demonstrate with_items vs loop
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Create multiple files using loop
+      ansible.builtin.file:
+        path: "/tmp/{{ item }}"
+        state: touch
+        mode: '0644'
+      loop:
+        - file1.txt
+        - file2.txt
+        - file3.txt
+      tags: ['loops']
+    
+    - name: Loop with dictionary
+      ansible.builtin.debug:
+        msg: "Key: {{ item.key }}, Value: {{ item.value }}"
+      loop: "{{ {'a': 1, 'b': 2, 'c': 3} | dict2items }}"
+      tags: ['loops']
+    
+    - name: Loop with index
+      ansible.builtin.debug:
+        msg: "Item {{ index }}: {{ item }}"
+      loop: ['first', 'second', 'third']
+      loop_control:
+        index_var: index
+      tags: ['loops']

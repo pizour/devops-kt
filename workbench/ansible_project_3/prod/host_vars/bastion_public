@@ -1,0 +1,56 @@
+---
+# Host-specific variables for bastion_public in PRODUCTION
+# Production public bastion with maximum security controls
+
+hostname: bastion-public-prod
+host_description: "Public bastion host for production environment"
+
+# Network configuration
+interface_public: eth0
+public_ip: 3.15.27.185
+private_ip: 10.210.159.121
+
+# Resource allocation (enhanced for prod)
+memory_limit: "4GB"
+cpu_cores: 4
+disk_size: "100GB"
+
+# Bastion-specific settings
+bastion_type: public
+access_level: external
+allow_public_access: true
+rate_limiting_enabled: true
+rate_limit: "10/minute"
+high_availability: true
+
+# SSH configuration (maximum security)
+ssh_banner_text: "PRODUCTION Public Bastion - Authorized Access Only - All actions are monitored and logged"
+ssh_max_auth_tries: 2
+ssh_login_grace_time: 20
+fail2ban_enabled: true
+fail2ban_maxretry: 2
+fail2ban_bantime: 7200  # 2 hours
+fail2ban_findtime: 600
+
+# Security (production-grade)
+allow_root_login: false
+password_authentication: false
+two_factor_auth: false  # Enable if MFA is configured
+whitelist_enabled: false  # Enable for IP whitelisting
+
+# DDoS protection
+connection_rate_limit: true
+max_startups: "10:30:60"
+
+# Monitoring and alerting
+health_check_enabled: true
+metrics_port: 9100
+alert_on_ssh_attacks: true
+alert_on_multiple_failed_logins: true
+alert_threshold: 2
+log_aggregation_enabled: true
+security_event_monitoring: true
+
+# Maintenance window
+maintenance_day: "Sunday"
+maintenance_hour: 1

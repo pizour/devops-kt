@@ -1,0 +1,28 @@
+---
+# Host-specific variables for nva-02-poland-central
+
+# Host identification
+hostname: nva-02-poland-central
+host_role: secondary
+
+# Resource allocation
+memory_limit: "4GB"
+cpu_cores: 2
+
+# Service-specific configuration
+webserver_enabled: true
+webserver_port: 8080
+ssl_enabled: false
+
+# Database configuration
+database_role: replica
+database_port: 5432
+replication_source: "nva-01-poland-west"
+
+# Development/testing settings
+debug_mode: true
+log_level: "debug"
+
+# Backup schedule
+backup_schedule: "0 2 * * *"
+backup_destination: "/backup/nva-02-poland"

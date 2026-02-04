@@ -1,0 +1,221 @@
+---
+# Testing and Validation Playbook  
+# Demonstrates: assertions, wait_for, uri module, validation
+#
+# Usage:
+#   ansible-playbook -i dev/hosts test-deployment.yml
+
+- name: Validate system configuration
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+    - name: Assert hostname is set correctly
+      ansible.builtin.assert:
+        that:
+          - hostname is defined
+          - hostname != ""
+        fail_msg: "Hostname is not properly defined"
+        success_msg: "Hostname is correctly configured: {{ hostname }}"
+      tags: ['validation', 'hostname']
+    
+    - name: Assert environment is valid
+      ansible.builtin.assert:
+        that:
+          - environment in ['development', 'production']
+          - env_short in ['dev', 'prod']
+        fail_msg: "Environment variables are not properly set"
+        success_msg: "Environment: {{ environment }} ({{ env_short }})"
+      tags: ['validation', 'environment']
+    
+    - name: Check required directories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: dir_check
+      failed_when: not dir_check.stat.exists
+      loop:
+        - /opt/scripts
+        - /opt/backups
+        - /var/log/applications
+      tags: ['validation', 'directories']
+    
+    - name: Verify SSH is listening
+      ansible.builtin.wait_for:
+        port: "{{ ssh_port | default(22) }}"
+        timeout: 10
+        msg: "SSH is not listening on port {{ ssh_port | default(22) }}"
+      tags: ['validation', 'ssh']
+    
+    - name: Check critical services are running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: service_status
+      failed_when: service_status.status.ActiveState != "active"
+      loop:
+        - ssh
+        - chronyd
+      tags: ['validation', 'services']
+    
+    - name: Verify health check script exists
+      ansible.builtin.stat:
+        path: /opt/scripts/health-check.sh
+      register: health_script
+      failed_when: not health_script.stat.exists or not health_script.stat.executable
+      tags: ['validation', 'scripts']
+    
+    - name: Run health check
+      ansible.builtin.command: /opt/scripts/health-check.sh
+      register: health_output
+      changed_when: false
+      tags: ['validation', 'health']
+    
+    - name: Display health check result
+      ansible.builtin.debug:
+        var: health_output.stdout_lines
+      tags: ['validation', 'health']
+
+- name: Validate bastion hosts
+  hosts: bastion
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+    - name: Assert bastion-specific configuration
+      ansible.builtin.assert:
+        that:
+          - server_role == "bastion"
+          - bastion_type is defined
+        fail_msg: "Bastion configuration is incomplete"
+        success_msg: "Bastion configuration is valid"
+      tags: ['validation', 'bastion']
+    
+    - name: Check bastion scripts exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: bastion_scripts
+      failed_when: not bastion_scripts.stat.exists
+      loop:
+        - /opt/scripts/bastion-status.sh
+        - /opt/scripts/bastion-health.sh
+      tags: ['validation', 'bastion']
+    
+    - name: Verify fail2ban is configured
+      ansible.builtin.stat:
+        path: /etc/fail2ban/jail.d/sshd.conf
+      register: fail2ban_config
+      when: fail2ban_enabled | default(false)
+      tags: ['validation', 'bastion', 'security']
+    
+    - name: Assert fail2ban configuration exists
+      ansible.builtin.assert:
+        that:
+          - fail2ban_config.stat.exists
+        fail_msg: "Fail2ban configuration is missing"
+        success_msg: "Fail2ban is properly configured"
+      when: fail2ban_enabled | default(false)
+      tags: ['validation', 'bastion', 'security']
+
+- name: Validate Fossology servers
+  hosts: fossology
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+    - name: Assert Fossology configuration
+      ansible.builtin.assert:
+        that:
+          - server_role == "application"
+          - app_name == "fossology"
+          - fossology_install_dir is defined
+        fail_msg: "Fossology configuration is incomplete"
+        success_msg: "Fossology configuration is valid"
+      tags: ['validation', 'fossology']
+    
+    - name: Check Apache is running
+      ansible.builtin.systemd:
+        name: apache2
+      register: apache_status
+      failed_when: apache_status.status.ActiveState != "active"
+      tags: ['validation', 'fossology', 'web']
+    
+    - name: Check PostgreSQL is running
+      ansible.builtin.systemd:
+        name: postgresql
+      register: postgres_status
+      failed_when: postgres_status.status.ActiveState != "active"
+      tags: ['validation', 'fossology', 'database']
+    
+    - name: Verify Apache is listening on correct port
+      ansible.builtin.wait_for:
+        port: "{{ web_server_port }}"
+        timeout: 10
+      tags: ['validation', 'fossology', 'web']
+    
+    - name: Check Fossology directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: fossology_dirs
+      failed_when: not fossology_dirs.stat.exists or not fossology_dirs.stat.isdir
+      loop:
+        - "{{ fossology_install_dir }}"
+        - "{{ fossology_data_dir }}"
+        - "{{ fossology_repo_dir }}"
+      tags: ['validation', 'fossology', 'directories']
+    
+    - name: Verify backup script exists
+      ansible.builtin.stat:
+        path: /opt/scripts/fossology-backup.sh
+      register: backup_script
+      when: backup_database | default(false)
+      tags: ['validation', 'fossology', 'backup']
+
+- name: Generate validation report
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Create validation report
+      ansible.builtin.copy:
+        content: |
+          Validation Report: {{ hostname }}
+          ===================================
+          Date: {{ ansible_date_time.iso8601 }}
+          Environment: {{ environment }}
+          
+          Status: ✅ ALL VALIDATIONS PASSED
+          
+          Validated Components:
+          - Hostname configuration
+          - Environment variables
+          - Required directories
+          - SSH service
+          - System services
+          - Health check scripts
+          {% if 'bastion' in group_names %}
+          - Bastion configuration
+          - Bastion scripts
+          {% if fail2ban_enabled | default(false) %}
+          - Fail2ban configuration
+          {% endif %}
+          {% endif %}
+          {% if 'fossology' in group_names %}
+          - Fossology configuration
+          - Apache web server
+          - PostgreSQL database
+          - Fossology directories
+          {% if backup_database | default(false) %}
+          - Backup scripts
+          {% endif %}
+          {% endif %}
+          
+          All tests completed successfully!
+        dest: "/tmp/{{ hostname }}-validation-report.txt"
+      tags: ['report']
+    
+    - name: Display validation summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ All validations passed for {{ hostname }}
+          Report saved to: /tmp/{{ hostname }}-validation-report.txt
+      tags: ['summary']

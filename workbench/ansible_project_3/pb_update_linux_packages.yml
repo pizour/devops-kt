@@ -1,0 +1,79 @@
+---
+# Package Update Playbook
+# This playbook demonstrates: package management, become, roles
+# Updates all packages on managed systems
+#
+# Usage:
+#   Development: ansible-playbook -i dev/hosts pb_update_linux_packages.yml
+#   Production: ansible-playbook -i prod/hosts pb_update_linux_packages.yml --check
+#   Specific hosts: ansible-playbook -i dev/hosts pb_update_linux_packages.yml --limit bastion
+
+- name: Update all Linux packages
+  hosts: all
+  become: true
+  gather_facts: true
+  
+  pre_tasks:
+    - name: Display update notice
+      ansible.builtin.debug:
+        msg: |
+          Starting package updates on {{ hostname }}
+          Environment: {{ environment }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+  
+  tasks:
+    - name: Update apt cache (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+      tags: ['packages', 'cache']
+    
+    - name: Upgrade all packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      when: ansible_os_family == "Debian"
+      register: apt_upgrade
+      tags: ['packages', 'upgrade']
+    
+    - name: Update yum cache (RedHat/CentOS)
+      ansible.builtin.yum:
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+      tags: ['packages', 'cache']
+    
+    - name: Upgrade all packages (RedHat/CentOS)
+      ansible.builtin.yum:
+        name: '*'
+        state: latest
+      when: ansible_os_family == "RedHat"
+      register: yum_upgrade
+      tags: ['packages', 'upgrade']
+    
+    - name: Check if reboot is required (Debian/Ubuntu)
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+      when: ansible_os_family == "Debian"
+      tags: ['reboot']
+    
+    - name: Display reboot requirement
+      ansible.builtin.debug:
+        msg: "⚠️  Reboot is required on {{ hostname }}"
+      when:
+        - ansible_os_family == "Debian"
+        - reboot_required.stat.exists
+      tags: ['reboot']
+  
+  post_tasks:
+    - name: Display update summary
+      ansible.builtin.debug:
+        msg: |
+          Package updates completed on {{ hostname }}
+          {% if ansible_os_family == "Debian" %}
+          Packages updated: {{ apt_upgrade.changed | default(false) }}
+          Reboot required: {{ reboot_required.stat.exists | default(false) }}
+          {% elif ansible_os_family == "RedHat" %}
+          Packages updated: {{ yum_upgrade.changed | default(false) }}
+          {% endif %}

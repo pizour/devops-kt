@@ -1,0 +1,43 @@
+---
+# Group variables for bastion hosts in PRODUCTION environment
+# Production bastions have stricter security controls
+
+# Role identification
+server_role: bastion
+server_purpose: "Production SSH jump host and gateway"
+
+# Security settings (stricter than dev)
+ssh_max_sessions: 5  # Lower than dev
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+allow_tcp_forwarding: true
+allow_agent_forwarding: false  # Disabled for security
+
+# Bastion-specific packages
+bastion_packages:
+  - fail2ban
+  - tcpdump
+  - netcat
+  - screen
+  - tmux
+  - auditd
+
+# Logging and auditing (comprehensive in prod)
+audit_enabled: true
+log_all_sessions: true
+session_log_dir: "/var/log/bastion-sessions"
+session_recording_enabled: true
+
+# Firewall rules (restricted in prod)
+allowed_ssh_sources:
+  - "10.0.0.0/8"      # Internal network only
+  - "172.16.0.0/12"   # Private network
+
+# Resource limits
+max_logins: 3
+max_cpu_usage: "70%"
+
+# Monitoring and alerting
+bastion_health_check_port: 22
+alert_on_failed_login: true
+alert_threshold: 3

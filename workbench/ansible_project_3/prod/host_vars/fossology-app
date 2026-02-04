@@ -1,0 +1,72 @@
+---
+# Host-specific variables for fossology-app in PRODUCTION
+# Production Fossology server with high performance configuration
+
+hostname: fossology-app-prod
+host_description: "Fossology application server - Production"
+
+# Network configuration
+private_ip: 10.210.159.110
+interface: eth0
+
+# Resource allocation (production specs)
+memory_limit: "16GB"
+cpu_cores: 8
+disk_size: "200GB"
+data_disk_size: "1TB"
+
+# Application configuration
+fossology_role: standalone  # Can be split to app/db in larger deployments
+fossology_workers: 12  # More workers for production load
+fossology_max_upload_size: "1000M"
+fossology_queue_size: 1000
+
+# Database settings (production optimized)
+db_host: localhost
+db_backup_enabled: true
+db_backup_schedule: "0 1 * * *"  # Daily at 1 AM
+db_incremental_backup: true
+db_backup_retention: 30
+db_performance_tuning: true
+
+# Web server (production load)
+web_workers: 16
+web_max_connections: 500
+web_keepalive_timeout: 65
+web_compression_enabled: true
+
+# Production-specific settings
+debug_enabled: false
+error_reporting: "E_ALL & ~E_DEPRECATED & ~E_STRICT"
+display_errors: false
+log_errors: true
+xdebug_enabled: false
+
+# Performance optimization
+fossology_cache_enabled: true
+fossology_cache_size: "2G"
+opcache_enabled: true
+opcache_memory: 256
+
+# Security
+ssl_enabled: true
+ssl_only: true
+security_headers_enabled: true
+
+# High availability
+health_check_url: "https://fossology-prod.example.com/health"
+health_check_interval: 30
+metrics_enabled: true
+performance_monitoring: true
+
+# Backup (comprehensive)
+backup_schedule: "0 0 * * *"
+backup_destination: "/backup/fossology-prod"
+backup_offsite_enabled: true
+backup_encryption_enabled: true
+
+# Alerts
+alert_on_high_cpu: true
+alert_on_high_memory: true
+alert_on_disk_space: true
+disk_alert_threshold: 80

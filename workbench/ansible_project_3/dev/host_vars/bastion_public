@@ -1,0 +1,42 @@
+---
+# Host-specific variables for bastion_public in DEV
+# This is the public-facing bastion for external access
+
+hostname: bastion-public-dev
+host_description: "Public bastion host for development environment"
+
+# Network configuration
+interface_public: eth0
+public_ip: 31.69.51.11
+private_ip: 10.120.11.21
+
+# Resource allocation
+memory_limit: "2GB"
+cpu_cores: 2
+disk_size: "50GB"
+
+# Bastion-specific settings
+bastion_type: public
+access_level: external
+allow_public_access: true
+rate_limiting_enabled: true
+
+# SSH configuration
+ssh_banner_text: "DEV Public Bastion - Authorized Access Only"
+ssh_max_auth_tries: 3
+fail2ban_enabled: true
+fail2ban_maxretry: 3
+fail2ban_bantime: 3600
+
+# Security
+allow_root_login: false
+password_authentication: false
+
+# Monitoring
+health_check_enabled: true
+metrics_port: 9100
+alert_on_ssh_attacks: true
+
+# Maintenance window
+maintenance_day: "Sunday"
+maintenance_hour: 3

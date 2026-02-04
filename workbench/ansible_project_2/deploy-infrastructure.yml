@@ -1,0 +1,74 @@
+---
+# Complete Infrastructure Deployment Playbook
+# This playbook demonstrates: multiple plays, role inclusion, host targeting, tags
+# 
+# Usage:
+#   ansible-playbook -i inventories/hosts-germany.yml deploy-infrastructure.yml
+#   ansible-playbook -i inventories/hosts-germany.yml deploy-infrastructure.yml --tags common
+#   ansible-playbook -i inventories/hosts-germany.yml deploy-infrastructure.yml --limit nva-01-germany-central
+
+- name: Deploy common configuration to all servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg: |
+          Starting deployment on {{ hostname }}
+          Region: {{ region }}
+          Environment: {{ app_environment }}
+  
+  roles:
+    - role: bootstrap_python
+      tags: ['bootstrap']
+    
+    - role: common
+      tags: ['common']
+  
+  post_tasks:
+    - name: Verify common setup
+      ansible.builtin.debug:
+        msg: "Common configuration completed successfully on {{ hostname }}"
+
+- name: Deploy web servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  roles:
+    - role: webserver
+      when: webserver_enabled | default(false)
+      tags: ['webserver']
+
+- name: Deploy database servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  roles:
+    - role: database
+      when: database_role is defined
+      tags: ['database']
+  
+  post_tasks:
+    - name: Display database role
+      ansible.builtin.debug:
+        msg: "Database configured as {{ database_role | default('not configured') }}"
+      when: database_role is defined
+
+- name: Final verification
+  hosts: all
+  gather_facts: no
+  become: no
+  
+  tasks:
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ Deployment completed for {{ hostname }}
+          - Region: {{ region }}
+          - Environment: {{ app_environment }}
+          - Web server: {{ 'enabled' if webserver_enabled | default(false) else 'disabled' }}
+          - Database role: {{ database_role | default('N/A') }}

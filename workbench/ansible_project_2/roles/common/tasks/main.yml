@@ -1,0 +1,108 @@
+---
+# Common role - tasks that run on all servers
+# This demonstrates: package management, file operations, services, handlers, loops
+
+- name: Update apt cache (Debian/Ubuntu)
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+  tags:
+    - packages
+    - common
+
+- name: Install common packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+  tags:
+    - packages
+    - common
+
+- name: Ensure app user exists
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    shell: /bin/bash
+    create_home: yes
+    state: present
+  tags:
+    - users
+    - common
+
+- name: Create application directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop:
+    - /opt/app
+    - /opt/app/logs
+    - /opt/app/config
+    - /var/log/app
+  tags:
+    - directories
+    - common
+
+- name: Configure timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  when: timezone is defined
+  notify: restart cron
+  tags:
+    - timezone
+    - common
+
+- name: Configure DNS resolvers
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: dns_servers is defined
+  tags:
+    - network
+    - common
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+  when: hostname is defined
+  tags:
+    - hostname
+    - common
+
+- name: Add hostname to /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_host }} {{ hostname }}"
+    state: present
+  when: hostname is defined
+  tags:
+    - hostname
+    - common
+
+- name: Configure NTP servers
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: ntp_servers is defined
+  notify: restart chronyd
+  tags:
+    - ntp
+    - common
+
+- name: Ensure chronyd is running
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: yes
+  tags:
+    - ntp
+    - common

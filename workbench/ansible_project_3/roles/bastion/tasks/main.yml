@@ -1,0 +1,171 @@
+---
+# Bastion role - Configure bastion/jump hosts
+# Demonstrates: conditional execution, templates, session logging
+
+- name: Install bastion-specific packages
+  ansible.builtin.package:
+    name: "{{ bastion_packages }}"
+    state: present
+  when: bastion_packages is defined
+  tags:
+    - bastion
+    - packages
+
+- name: Create session logging directory
+  ansible.builtin.file:
+    path: "{{ session_log_dir }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+  when: log_all_sessions | default(false)
+  tags:
+    - bastion
+    - logging
+
+- name: Configure session logging script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Session logging for bastion host
+      # Logs all user sessions to {{ session_log_dir }}
+      
+      if [ -n "$SSH_CONNECTION" ]; then
+          LOGDIR="{{ session_log_dir }}"
+          LOGFILE="$LOGDIR/$(date +%Y%m%d-%H%M%S)-$USER-$$"
+          script -q -f -a "$LOGFILE"
+      fi
+    dest: /etc/profile.d/bastion-logging.sh
+    mode: '0644'
+  when: log_all_sessions | default(false)
+  tags:
+    - bastion
+    - logging
+
+- name: Allow specific TCP forwarding for bastion
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?AllowTcpForwarding"
+    line: "AllowTcpForwarding {{ 'yes' if allow_tcp_forwarding | default(false) else 'no' }}"
+    state: present
+  notify: restart sshd
+  tags:
+    - bastion
+    - ssh
+
+- name: Configure agent forwarding
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?AllowAgentForwarding"
+    line: "AllowAgentForwarding {{ 'yes' if allow_agent_forwarding | default(false) else 'no' }}"
+    state: present
+  notify: restart sshd
+  tags:
+    - bastion
+    - ssh
+
+- name: Set maximum SSH sessions
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxSessions"
+    line: "MaxSessions {{ ssh_max_sessions | default(10) }}"
+    state: present
+  notify: restart sshd
+  tags:
+    - bastion
+    - ssh
+
+- name: Create bastion user management script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Bastion user management script
+      # Shows currently logged in users and their sessions
+      
+      echo "=== Bastion Host: {{ hostname }} ==="
+      echo "Environment: {{ environment }}"
+      echo ""
+      echo "Currently logged in users:"
+      who
+      echo ""
+      echo "Active SSH connections:"
+      ss -tn state established '( dport = :22 or sport = :22 )'
+      echo ""
+      echo "System load:"
+      uptime
+    dest: /opt/scripts/bastion-status.sh
+    mode: '0755'
+  tags:
+    - bastion
+    - monitoring
+
+- name: Create bastion connection helper
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Bastion connection helper
+      # Usage: bastion-connect <destination-host>
+      
+      if [ -z "$1" ]; then
+          echo "Usage: $0 <destination-host>"
+          echo "Example: $0 app-server-01"
+          exit 1
+      fi
+      
+      DEST_HOST=$1
+      echo "Connecting to $DEST_HOST via bastion..."
+      ssh -A "$DEST_HOST"
+    dest: /usr/local/bin/bastion-connect
+    mode: '0755'
+  tags:
+    - bastion
+    - tools
+
+- name: Configure public bastion firewall (more restrictive)
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port | default(22) }}"
+    proto: tcp
+    from_ip: "{{ item }}"
+  loop: "{{ allowed_ssh_sources | default(['0.0.0.0/0']) }}"
+  when:
+    - bastion_type is defined
+    - bastion_type == 'public'
+    - firewall_enabled | default(false)
+  tags:
+    - bastion
+    - firewall
+    - public
+
+- name: Create bastion health check
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Bastion health check
+      
+      # Check SSH is running
+      if systemctl is-active --quiet ssh || systemctl is-active --quiet sshd; then
+          echo "OK: SSH service is running"
+          exit 0
+      else
+          echo "ERROR: SSH service is not running"
+          exit 1
+      fi
+    dest: /opt/scripts/bastion-health.sh
+    mode: '0755'
+  tags:
+    - bastion
+    - monitoring
+
+- name: Display bastion configuration
+  ansible.builtin.debug:
+    msg: |
+      Bastion {{ hostname }} configured:
+      - Type: {{ bastion_type | default('standard') }}
+      - Access Level: {{ access_level | default('internal') }}
+      - Session Logging: {{ 'enabled' if log_all_sessions | default(false) else 'disabled' }}
+      - TCP Forwarding: {{ 'enabled' if allow_tcp_forwarding | default(false) else 'disabled' }}
+      - Agent Forwarding: {{ 'enabled' if allow_agent_forwarding | default(false) else 'disabled' }}
+  tags:
+    - bastion
+    - info

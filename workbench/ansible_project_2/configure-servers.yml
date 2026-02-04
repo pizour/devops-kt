@@ -1,0 +1,128 @@
+---
+# Configuration Management Playbook
+# This playbook demonstrates: tasks, variables, conditionals, loops, and filters
+#
+# Usage:
+#   ansible-playbook -i inventories/hosts-germany.yml configure-servers.yml
+
+- name: Configure server settings
+  hosts: all
+  gather_facts: yes
+  become: yes
+  
+  vars:
+    # Playbook-level variables
+    security_packages:
+      - fail2ban
+      - ufw
+      - unattended-upgrades
+    
+    custom_motd: |
+      ================================================
+      {{ hostname }} - {{ region | upper }} Region
+      Environment: {{ app_environment | upper }}
+      Managed by Ansible
+      ================================================
+  
+  tasks:
+    - name: Set custom message of the day
+      ansible.builtin.copy:
+        content: "{{ custom_motd }}"
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: '0644'
+      tags: ['motd']
+    
+    - name: Install security packages
+      ansible.builtin.package:
+        name: "{{ security_packages }}"
+        state: present
+      tags: ['security', 'packages']
+    
+    - name: Configure firewall rules
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"    # SSH
+        - "{{ webserver_port | default(80) }}"  # HTTP
+        - "{{ ssl_port | default(443) }}"        # HTTPS
+      when: firewall_enabled | default(true)
+      tags: ['security', 'firewall']
+    
+    - name: Enable firewall
+      community.general.ufw:
+        state: enabled
+      when: firewall_enabled | default(true)
+      tags: ['security', 'firewall']
+    
+    - name: Create monitoring check script
+      ansible.builtin.copy:
+        content: |
+          #!/bin/bash
+          # Server health check for {{ hostname }}
+          echo "=== System Health Check ==="
+          echo "Hostname: $(hostname)"
+          echo "Uptime: $(uptime)"
+          echo "Memory: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
+          echo "Disk: $(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')"
+        dest: /usr/local/bin/health-check.sh
+        owner: root
+        group: root
+        mode: '0755'
+      tags: ['monitoring']
+    
+    - name: Get list of running services
+      ansible.builtin.service_facts:
+      tags: ['info']
+    
+    - name: Display nginx status
+      ansible.builtin.debug:
+        msg: "Nginx is {{ 'running' if ansible_facts.services['nginx.service'].state == 'running' else 'not running' }}"
+      when:
+        - ansible_facts.services['nginx.service'] is defined
+        - webserver_enabled | default(false)
+      tags: ['info']
+    
+    - name: Create directory structure
+      ansible.builtin.file:
+        path: "/opt/{{ item.name }}"
+        state: directory
+        owner: "{{ item.owner | default('root') }}"
+        mode: "{{ item.mode | default('0755') }}"
+      loop:
+        - { name: 'monitoring', owner: 'root' }
+        - { name: 'scripts', owner: 'root' }
+        - { name: 'data', owner: "{{ app_user }}", mode: '0750' }
+      tags: ['directories']
+    
+    - name: Generate configuration file from facts
+      ansible.builtin.template:
+        src: templates/server-info.txt.j2
+        dest: /opt/monitoring/server-info.txt
+        mode: '0644'
+      tags: ['info']
+
+- name: Regional-specific configuration
+  hosts: all
+  gather_facts: no
+  become: yes
+  
+  tasks:
+    - name: Configure Germany-specific settings
+      ansible.builtin.debug:
+        msg: "Applying Germany-specific configuration for {{ hostname }}"
+      when: region == "germany"
+    
+    - name: Configure Poland-specific settings
+      ansible.builtin.debug:
+        msg: "Applying Poland-specific configuration for {{ hostname }}"
+      when: region == "poland"
+    
+    - name: Create region marker file
+      ansible.builtin.copy:
+        content: "This server is in {{ region }} region ({{ data_center }})"
+        dest: "/etc/region-info"
+        mode: '0644'
