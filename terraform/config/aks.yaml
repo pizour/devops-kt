@@ -1,5 +1,5 @@
 # AKS Configuration
-aks_node_count: 1
+aks_node_count: 2
 aks_vm_size: "Standard_D2s_v3"
 kubernetes_version: null
 aks_enable_http_routing: false
