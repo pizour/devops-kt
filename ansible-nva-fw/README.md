@@ -1,11 +1,12 @@
 # NVA Firewall Ansible Configuration
 
-This Ansible project configures an Azure VM as a Network Virtual Appliance (NVA) firewall, replicating the functionality of the init-script.sh.
+This Ansible project configures an Azure VM as a Network Virtual Appliance (NVA) firewall.
 
 ## Project Structure
 
 ```
-ansible/
+ansible-nva-fw/
+├── .ansible-lint                       # Ansible linting configuration
 ├── ansible.cfg                          # Ansible configuration
 ├── configure-nva-firewall.yml          # Main playbook
 ├── prod/                               # Production inventory
@@ -183,6 +184,7 @@ Then check logs: `sudo tail -f /var/log/kern.log | grep iptables-dropped`
 - Uses Jinja2 templates for dynamic rule generation
 - Creates backups of iptables rules before changes
 - `DEBIAN_FRONTEND=noninteractive` prevents interactive prompts during package installation
+- Uses `ansible.builtin.shell` module for iptables-restore to support shell redirection
 
 ## Troubleshooting
 
