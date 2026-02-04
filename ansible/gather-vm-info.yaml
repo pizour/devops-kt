@@ -1,0 +1,27 @@
+---
+- name: DevOps-KT Infrastructure Playbook
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Print connection info
+      debug:
+        msg: "Connected to host: {{ inventory_hostname }} ({{ ansible_host }})"
+
+    - name: Retrieve OS Release information
+      slurp:
+        src: /etc/os-release
+      register: os_release
+
+    - name: Display OS Release
+      debug:
+        msg: "{{ os_release['content'] | b64decode }}"
+
+    - name: Print system facts
+      debug:
+        msg: |
+          System Information:
+          - Hostname: {{ ansible_hostname }}
+          - OS Family: {{ ansible_os_family }}
+          - Kernel: {{ ansible_kernel }}
+          - Architecture: {{ ansible_architecture }}
+          - Python Version: {{ ansible_python_version }}
