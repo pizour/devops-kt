@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block body_class %}page-login{% endblock %}
+
+{% block content %}
+  <div class="section-card" style="margin-top: 0.5rem;">
+    <h1>Team Devops-KT - vacation tracker</h1>
+    <div class="auth-layout" style="margin-top: 1rem;">
+    <section class="section-card">
+      <h2>Sign in with Entra</h2>
+      <p style="font-size: 0.9rem; color: #4b5563;">
+        Use your Microsoft Entra account to sign in. You will be redirected to the Microsoft login page and then back to this application.
+      </p>
+      <a href="{{ url_for('login_sso') }}" class="button-secondary" style="margin-top: 0.5rem; display: inline-block;">
+        Single Sign-On
+      </a>
+    </section>
+    <section class="section-card">
+      <h2>Local account</h2>
+      <p style="font-size: 0.9rem; color: #4b5563;">
+        Sign in using a local account managed inside this application.
+      </p>
+      <form method="post">
+        <div>
+          <label for="username">Username</label><br>
+          <input id="username" name="username" autocomplete="username" required>
+        </div>
+        <div>
+          <label for="password">Password</label><br>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div>
+          <button type="submit">Log in</button>
+        </div>
+      </form>
+      <p style="margin-top: 0.75rem; font-size: 0.9rem;">
+        {% if config.AUTH_BACKEND|default('pam') == 'internal' %}
+          Need an account? <a href="{{ url_for('register') }}">Register</a> a local account.
+        {% else %}
+          Accounts are managed by your Linux system administrator.
+        {% endif %}
+      </p>
+    </section>
+    </div>
+  </div>
+{% endblock %}

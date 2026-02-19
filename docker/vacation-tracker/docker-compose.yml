@@ -1,0 +1,19 @@
+services:
+  vacation-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vacation-tracker
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-change-me}
+      - VACATION_DB_PATH=/data/vacations.db
+      - AUTH_BACKEND=internal
+      - ADMIN_USERS=${ADMIN_USERS:-admin}
+    volumes:
+      - vacation-tracker-data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  vacation-tracker-data:

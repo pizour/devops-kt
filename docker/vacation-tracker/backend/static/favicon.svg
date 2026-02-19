@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- close-up, extra thick palm tree with transparent background -->
+  <!-- trunk -->
+  <path d="M22 64 L42 64 L41 24 L23 24 Z" fill="#92400e"/>
+
+  <!-- leaves (larger, more prominent) -->
+  <g fill="#16a34a">
+    <!-- wide top leaves -->
+    <path d="M32 24 C12 16 6 16 0 18 C12 6 24 4 32 6 Z"/>
+    <path d="M32 24 C52 16 58 16 64 18 C52 6 40 4 32 6 Z"/>
+    <!-- upper diagonal leaves -->
+    <path d="M32 24 C20 12 18 8 16 0 C26 6 30 8 36 10 Z"/>
+    <path d="M32 24 C44 12 46 8 48 0 C38 6 34 8 28 10 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Confirm user removal</h1>
+  <p>
+    You are about to remove user <strong>{{ managed_username }}</strong> and all of their bookings.
+    This action cannot be undone.
+  </p>
+  <p style="margin-top: 0.75rem;">
+    To confirm, type <code>delete</code> in the box below and click <strong>Delete user</strong>.
+  </p>
+
+  <form method="post">
+    <div>
+      <label for="confirm_text">Type <code>delete</code> to confirm</label><br>
+      <input id="confirm_text" name="confirm_text" autocomplete="off" required>
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <button type="submit" class="button-danger">Delete user</button>
+      <a href="{{ url_for('admin_users') }}" class="button-secondary" style="margin-left: 0.5rem;">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Edit booking</h1>
+  <p>Update the dates for this vacation booking.</p>
+  <form method="post">
+    <div>
+      <label>User</label><br>
+      <input value="{{ booking.username }}" disabled>
+    </div>
+    <div>
+      <span>Booking type</span><br>
+      {% set is_half = booking.slot in ["am", "pm"] %}
+      <label>
+        <input
+          type="radio"
+          name="slot_mode"
+          value="full"
+          {% if not is_half %}checked{% endif %}
+        >
+        Full day
+      </label>
+      <label style="margin-left: 0.75rem;">
+        <input
+          type="radio"
+          name="slot_mode"
+          value="half"
+          {% if is_half %}checked{% endif %}
+        >
+        Half day
+      </label>
+    </div>
+    <div id="half-day-options" style="margin-left: 1rem; {% if not is_half %}display: none;{% endif %}">
+      <span>Half-day slot</span><br>
+      <label>
+        <input
+          type="radio"
+          name="slot_half"
+          value="am"
+          {% if booking.slot == "am" %}checked{% endif %}
+        >
+        AM
+      </label>
+      <label style="margin-left: 0.75rem;">
+        <input
+          type="radio"
+          name="slot_half"
+          value="pm"
+          {% if booking.slot == "pm" %}checked{% endif %}
+        >
+        PM
+      </label>
+    </div>
+    <div>
+      <label for="comment">Comment (optional)</label><br>
+      <textarea
+        id="comment"
+        name="comment"
+        rows="2"
+        style="width: 100%;"
+      >{{ booking.comment or "" }}</textarea>
+    </div>
+    <div>
+      <label for="start_date">Start date</label><br>
+      <input
+        type="date"
+        id="start_date"
+        name="start_date"
+        value="{{ booking.start_date.isoformat() }}"
+        required
+      >
+    </div>
+    <div>
+      <label for="end_date">End date</label><br>
+      <input
+        type="date"
+        id="end_date"
+        name="end_date"
+        value="{{ booking.end_date.isoformat() }}"
+        required
+      >
+    </div>
+    <div>
+      <button type="submit">Save changes</button>
+      <a href="{{ url_for('calendar_view') }}" class="button-secondary" style="margin-left: 0.5rem;">Cancel</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    (function () {
+      const start = document.getElementById("start_date");
+      const end = document.getElementById("end_date");
+      if (start && end) {
+        start.addEventListener("change", function () {
+          if (!start.value || !end.value) {
+            return;
+          }
+          if (end.value < start.value) {
+            end.value = start.value;
+          }
+        });
+      }
+
+      const modeInputs = document.querySelectorAll('input[name="slot_mode"]');
+      const halfOptions = document.getElementById("half-day-options");
+      function updateHalfVisibility() {
+        if (!halfOptions || !modeInputs.length) return;
+        let mode = "full";
+        modeInputs.forEach(function (input) {
+          if (input.checked) {
+            mode = input.value;
+          }
+        });
+        halfOptions.style.display = mode === "half" ? "block" : "none";
+      }
+      if (modeInputs.length && halfOptions) {
+        modeInputs.forEach(function (input) {
+          input.addEventListener("change", updateHalfVisibility);
+        });
+        updateHalfVisibility();
+      }
+    })();
+  </script>
+{% endblock %}
