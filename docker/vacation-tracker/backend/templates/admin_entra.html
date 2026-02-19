@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Login settings</h1>
+  <p>Configure login options for this application: Microsoft Entra SSO and the registration token for local accounts.</p>
+
+  <form method="post" style="max-width: 480px;">
+    <div>
+      <h2 style="margin: 0 0 0.25rem 0; font-size: 1rem;">Microsoft Entra (SSO)</h2>
+      <p style="font-size: 0.85rem; color: #4b5563; margin-top: 0;">
+        Configure Single Sign-On using your Microsoft Entra tenant.
+      </p>
+    </div>
+    <div>
+      <label for="tenant_id">Tenant ID</label><br>
+      <input id="tenant_id" name="tenant_id" value="{{ config.tenant_id or '' }}" required style="width: 100%;">
+    </div>
+    <div>
+      <label for="client_id">Client ID (Application ID)</label><br>
+      <input id="client_id" name="client_id" value="{{ config.client_id or '' }}" required style="width: 100%;">
+    </div>
+    <div>
+      <label for="client_secret">Client secret</label><br>
+      <input
+        id="client_secret"
+        name="client_secret"
+        type="password"
+        autocomplete="new-password"
+        style="width: 100%;"
+        placeholder="{% if config.client_secret %}•••••••• (leave blank to keep current){% else %}Enter new secret{% endif %}"
+      >
+    </div>
+    <div style="margin-top: 0.5rem;">
+      <label>
+        <input type="checkbox" name="enabled" value="1" {% if config.enabled %}checked{% endif %}>
+        Enable SSO (Microsoft Entra)
+      </label>
+    </div>
+
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #4b5563;">
+      Redirect URI to configure in Entra: <code>{{ url_for('entra_callback', _external=true) }}</code>
+    </p>
+
+    <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid #e5e7eb;">
+
+    <div>
+      <h2 style="margin: 0 0 0.25rem 0; font-size: 1rem;">Registration token (local accounts)</h2>
+      <p style="font-size: 0.85rem; color: #4b5563; margin-top: 0;">
+        This token is required when users register new local accounts via the web UI.
+      </p>
+      <label for="registration_token" style="margin-top: 0.5rem; display: block;">Registration token</label>
+      <input
+        id="registration_token"
+        name="registration_token"
+        value="{{ config.registration_token or '' }}"
+        style="width: 100%;"
+      >
+      <div style="font-size: 0.8rem; color: #4b5563; margin-top: 0.15rem;">
+        Leave empty to disable self-registration; users will not be able to create new local accounts.
+      </div>
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <button type="submit">Save settings</button>
+      <a href="{{ url_for('calendar_view') }}" class="button-secondary" style="margin-left: 0.5rem;">Back</a>
+    </div>
+  </form>
+{% endblock %}

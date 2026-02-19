@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Create account</h1>
+  <p>This account is stored inside the vacation tracker database and is preserved as long as the data volume exists.</p>
+  <form method="post">
+    <div>
+      <label for="username">Username</label><br>
+      <input id="username" name="username" autocomplete="username" required value="{{ username or '' }}">
+      <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 0.15rem;">
+        Use following format: firstname.lastname
+      </div>
+    </div>
+    <div>
+      <label for="password">Password</label><br>
+      <input id="password" name="password" type="password" autocomplete="new-password" required>
+    </div>
+    <div>
+      <label for="confirm_password">Confirm password</label><br>
+      <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+    </div>
+    <div>
+      <label for="registration_token">Registration token</label><br>
+      <input
+        id="registration_token"
+        name="registration_token"
+        type="password"
+        autocomplete="off"
+        required
+      >
+      <div style="font-size: 0.8rem; color: #4b5563; margin-top: 0.15rem;">
+        Ask your administrator for the registration token.
+      </div>
+    </div>
+    <div>
+      <button type="submit">Register</button>
+    </div>
+  </form>
+{% endblock %}

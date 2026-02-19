@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Bookings overview</h1>
+  {% if is_admin %}
+    <p>You are viewing all users' bookings.</p>
+  {% else %}
+    <p>You are viewing your bookings across all months.</p>
+  {% endif %}
+
+  {% if bookings %}
+    <table class="calendar-grid" style="margin-top: 0.5rem;">
+      <thead>
+        <tr>
+          {% if is_admin %}
+            <th>User</th>
+          {% endif %}
+          <th>Start</th>
+          <th>End</th>
+          <th>Type</th>
+          <th>Created (UTC)</th>
+          <th>Edited (UTC)</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+          <tr>
+            {% if is_admin %}
+              <td>{{ booking.username }}</td>
+            {% endif %}
+            <td>{{ booking.start_date }}</td>
+            <td>{{ booking.end_date }}</td>
+            <td>
+              {% if booking.slot == "am" %}
+                Half day (AM)
+              {% elif booking.slot == "pm" %}
+                Half day (PM)
+              {% else %}
+                Full day
+              {% endif %}
+            </td>
+            <td>{{ booking.created_at }}</td>
+            <td>{{ booking.edited_at or "-" }}</td>
+            <td>{{ booking.comment or "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="font-size: 0.9rem; color: #6b7280;">No bookings found.</p>
+  {% endif %}
+{% endblock %}

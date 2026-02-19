@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <!-- sky -->
+  <defs>
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="260" fill="url(#skyGradient)"/>
+
+  <!-- sun -->
+  <circle cx="110" cy="80" r="40" fill="#fde047" opacity="0.95"/>
+
+  <!-- sea -->
+  <rect y="220" width="800" height="80" fill="#0ea5e9"/>
+
+  <!-- waves -->
+  <path d="M0 260 Q40 250 80 260 T160 260 T240 260 T320 260 T400 260 T480 260 T560 260 T640 260 T720 260 T800 260"
+        fill="none" stroke="#e0f2fe" stroke-width="4" opacity="0.8"/>
+
+  <!-- beach -->
+  <path d="M0 260 C200 300 600 320 800 300 V400 H0 Z" fill="#facc15"/>
+
+  <!-- palm trunk -->
+  <path d="M580 320 L620 320 L605 210 L595 210 Z" fill="#92400e"/>
+
+  <!-- palm leaves -->
+  <g fill="#16a34a">
+    <path d="M600 210 C560 190 540 188 520 192 C540 172 560 166 600 170 Z"/>
+    <path d="M600 210 C640 190 660 188 680 192 C660 172 640 166 600 170 Z"/>
+    <path d="M600 210 C570 185 560 170 555 150 C570 160 585 166 600 170 Z"/>
+    <path d="M600 210 C630 185 640 170 645 150 C630 160 615 166 600 170 Z"/>
+  </g>
+</svg>
+
