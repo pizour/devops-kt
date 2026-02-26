@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: alpine-app
+  template:
+    metadata:
+      labels:
+        app: alpine-app
+    spec:
+      containers:
+        - name: alpine-container
+          image: alpine:3.20
+          command: ["sh", "-c", "while true; do echo \"$(date -Iseconds) [alpine-deployment] dummy log line\"; sleep 5; done"]
+          ports:
+            - containerPort: 8080

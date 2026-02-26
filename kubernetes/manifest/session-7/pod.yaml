@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: roman-pod
+spec:
+  containers:
+    - name: alpine-container
+      image: alpine:3.20
+      command: ["sh", "-c", "while true; do echo \"$(date -Iseconds) [alpine-container] dummy log line\"; sleep 5; done"]
+    - name: ubuntu-container
+      image: ubuntu:24.04
+      command: ["bash", "-c", "while true; do echo \"$(date -Iseconds) [ubuntu-container] dummy log line\"; sleep 5; done"]
+  restartPolicy: Always
