@@ -1,7 +1,7 @@
 # Hub-Spoke Network Architecture on Azure
 ## DevOps Knowledge Transfer Guide
 
-**Author:** Zdenek Pyszko  
+**Author:** [REDACTED]  
 **Date:** January 2026  
 **Audience:** Infrastructure Engineers  
 **Level:** Intermediate to Advanced
@@ -1737,7 +1737,7 @@ terraform apply
 - Integration with on-premises?
 
 **Contact:**
-- Email: zdenek@pysta.net
+- Email: [REDACTED]
 - GitHub: [your-github]
 
 ---

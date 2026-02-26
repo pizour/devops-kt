@@ -1,7 +1,7 @@
 # Git & CI/CD Pipelines
 ## DevOps Knowledge Transfer – Session 4
 
-**Author:** Zdenek Pyszko  
+**Author:** [REDACTED]  
 **Date:** February 2026  
 **Audience:** Infrastructure Engineers  
 **Duration:** ~2 hours  
@@ -103,8 +103,8 @@ Everything we built in previous sessions lives in a Git repo.
 
 ```bash
 # Configure your identity (one-time setup)
-git config --global user.name "Zdenek Pyszko"
-git config --global user.email "zdenek@example.com"
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
 
 # View your configuration
 git config --list

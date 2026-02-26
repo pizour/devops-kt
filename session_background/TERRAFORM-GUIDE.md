@@ -247,7 +247,7 @@ availability_zones:
 common_tags:
   CreatedBy: Terraform
   Topology: HubSpoke
-  Author: pizour
+  Author: [REDACTED]
 
 # Multiple documents (separated by ---)
 ---
@@ -311,7 +311,7 @@ locals {
   "common_tags": {
     "CreatedBy": "Terraform",
     "Topology": "HubSpoke",
-    "Author": "pizour"
+    "Author": "[REDACTED]"
   },
   "virtual_networks": {
     "hub-vnet": {
@@ -1766,4 +1766,4 @@ terraform workspace show
 
 **Last Updated**: January 2026  
 **Project**: devops-kt  
-**Author**: pizour
+**Author**: [REDACTED]

@@ -1,7 +1,7 @@
 # Docker Fundamentals
 ## DevOps Knowledge Transfer – Session 6
 
-**Author:** Zdenek Pyszko  
+**Author:** [REDACTED]  
 **Date:** February 2026  
 **Audience:** Infrastructure Engineers  
 **Duration:** ~90 minutes  
@@ -253,7 +253,7 @@ A Dockerfile is a text file with instructions for building an image. Think of it
 FROM python:3.11-slim
 
 # 2. Metadata
-LABEL maintainer="zdenek@example.com"
+LABEL maintainer="maintainer@example.com"
 LABEL description="Simple Flask web application"
 
 # 3. Set working directory inside the container
