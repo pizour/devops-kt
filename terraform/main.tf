@@ -48,35 +48,35 @@ module "ubuntu_nva_firewall" {
   ]
 }
 
-# AKS Module
-module "aks" {
-  source = "./modules/aks"
-
-  cluster_name        = "${local.azure_resource_group_name}-aks"
-  dns_prefix          = replace(local.azure_resource_group_name, "-", "")
-  location            = local.azure_location
-  resource_group_name = azurerm_resource_group.main.name
-  resource_group_id   = azurerm_resource_group.main.id
-
-  subnet_id = module.hub_spoke.subnet_ids["spoke1-aks-vnet/spoke1-aks-snet"]
-
-  default_node_pool_name = "agentpool"
-  node_count             = local.aks.aks_node_count
-  vm_size                = local.aks.aks_vm_size
-  kubernetes_version     = local.aks.kubernetes_version
-
-  service_cidr   = "10.240.0.0/16"
-  dns_service_ip = "10.240.0.10"
-
-  enable_http_application_routing = local.aks.aks_enable_http_routing
-  enable_azure_policy             = local.aks.aks_enable_azure_policy
-
-  common_tags = local.common_tags
-
-  depends_on = [
-    azurerm_resource_group.main,
-    module.hub_spoke
-  ]
-}
+# # AKS Module
+# module "aks" {
+#   source = "./modules/aks"
+#
+#   cluster_name        = "${local.azure_resource_group_name}-aks"
+#   dns_prefix          = replace(local.azure_resource_group_name, "-", "")
+#   location            = local.azure_location
+#   resource_group_name = azurerm_resource_group.main.name
+#   resource_group_id   = azurerm_resource_group.main.id
+#
+#   subnet_id = module.hub_spoke.subnet_ids["spoke1-aks-vnet/spoke1-aks-snet"]
+#
+#   default_node_pool_name = "agentpool"
+#   node_count             = local.aks.aks_node_count
+#   vm_size                = local.aks.aks_vm_size
+#   kubernetes_version     = local.aks.kubernetes_version
+#
+#   service_cidr   = "10.240.0.0/16"
+#   dns_service_ip = "10.240.0.10"
+#
+#   enable_http_application_routing = local.aks.aks_enable_http_routing
+#   enable_azure_policy             = local.aks.aks_enable_azure_policy
+#
+#   common_tags = local.common_tags
+#
+#   depends_on = [
+#     azurerm_resource_group.main,
+#     module.hub_spoke
+#   ]
+# }
 
 
