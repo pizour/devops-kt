@@ -51,6 +51,24 @@ subnet_nsgs:
         destination_port_range: "22"
         source_address_prefix: ALLOWED_SSH_IPS
         destination_address_prefix: "*"
+      - name: AllowApiFromAgwSubnet
+        priority: 106
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "5000-5001"
+        source_address_prefix: 10.0.2.0/24
+        destination_address_prefix: "*"
+      - name: DenyApiFromOthers
+        priority: 107
+        direction: Inbound
+        access: Deny
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "5000-5001"
+        source_address_prefix: "*"
+        destination_address_prefix: "*"
       - name: AllowInternalTraffic
         priority: 110
         direction: Inbound
@@ -166,7 +184,7 @@ subnet_nsgs:
         protocol: Tcp
         source_port_range: "*"
         destination_port_range: "5000-5001"
-        source_address_prefix: Internet
+        source_address_prefix: ALLOWED_SSH_IPS
         destination_address_prefix: "*"
       - name: AllowGatewayManagerInbound
         priority: 110
