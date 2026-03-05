@@ -5,6 +5,7 @@ locals {
   vnets_config        = yamldecode(file("${path.module}/config/vnets.yaml"))
   nsgs_config         = yamldecode(file("${path.module}/config/nsgs.yaml"))
   nva_firewall_config = yamldecode(file("${path.module}/config/nva_firewall.yaml"))
+  appgw_config        = yamldecode(file("${path.module}/config/appgw.yaml"))
   # aks_config          = yamldecode(file("${path.module}/config/aks.yaml"))
 
   # Dynamic values
@@ -41,6 +42,9 @@ locals {
 
   # NVA Firewall configuration
   nva_firewall = local.nva_firewall_config.nva_firewall
+
+  # Application Gateway configuration
+  appgw = local.appgw_config.appgw
 
   # AKS configuration
   # aks = local.aks_config

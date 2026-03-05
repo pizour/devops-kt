@@ -18,13 +18,14 @@ resource "azurerm_route_table" "route_table" {
 }
 
 # Routes for spoke and hub subnets (default route to NVA firewall)
+# Excluded: hub-fw-snet (has its own Internet route), hub-agw-snet (AGW requires Internet default)
 resource "azurerm_route" "spoke_default_route" {
   for_each = merge([
     for vnet_name, vnet_config in var.vnets : {
       for subnet_name in keys(vnet_config.subnets) :
       "${vnet_name}/${subnet_name}" => {
         route_table_key = "${vnet_name}/${subnet_name}"
-      } if subnet_name != "hub-fw-snet"
+      } if !contains(["hub-fw-snet", "hub-agw-snet"], subnet_name)
     }
   ]...)
 
@@ -50,6 +51,15 @@ resource "azurerm_route" "fw_default_route" {
   name                = "default-route-to-internet"
   resource_group_name = var.resource_group_name
   route_table_name    = azurerm_route_table.route_table["hub-vnet/hub-fw-snet"].name
+  address_prefix      = "0.0.0.0/0"
+  next_hop_type       = "Internet"
+}
+
+# Route for AGW subnet - default route to Internet (required for Application Gateway)
+resource "azurerm_route" "agw_default_route" {
+  name                = "default-route-to-internet"
+  resource_group_name = var.resource_group_name
+  route_table_name    = azurerm_route_table.route_table["hub-vnet/hub-agw-snet"].name
   address_prefix      = "0.0.0.0/0"
   next_hop_type       = "Internet"
 }

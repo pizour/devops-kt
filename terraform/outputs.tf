@@ -39,3 +39,14 @@ output "ubuntu_nva_firewall" {
     nva_nic_id = module.ubuntu_nva_firewall.nva_nic_id
   }
 }
+
+output "appgw" {
+  description = "Application Gateway details"
+  value = {
+    appgw_id                     = module.appgw.appgw_id
+    appgw_name                   = module.appgw.appgw_name
+    public_ip                    = module.appgw.appgw_public_ip
+    log_analytics_workspace_id   = module.appgw.log_analytics_workspace_id
+    log_analytics_workspace_name = module.appgw.log_analytics_workspace_name
+  }
+}

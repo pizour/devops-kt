@@ -1,0 +1,43 @@
+# Application Gateway Configuration
+appgw:
+  enabled: true
+  sku_name: WAF_v2
+  sku_tier: WAF_v2
+  capacity: 2
+
+  # WAF Configuration
+  waf:
+    enabled: true
+    firewall_mode: Prevention
+    rule_set_type: OWASP
+    rule_set_version: "3.2"
+
+  # Frontend - HTTP only (port 80)
+  frontend_port: 80
+
+  # Backend pools target the NVA firewall VM
+  # Path-based routing: /api1 -> port 5000, /api2 -> port 5001
+  backend:
+    api1:
+      path: "/api1/*"
+      port: 5000
+      protocol: Http
+      request_timeout: 30
+    api2:
+      path: "/api2/*"
+      port: 5001
+      protocol: Http
+      request_timeout: 30
+
+  # Health probe configuration
+  health_probe:
+    path: "/health"
+    protocol: Http
+    interval: 30
+    timeout: 30
+    unhealthy_threshold: 3
+
+  # Log Analytics
+  log_analytics:
+    sku: PerGB2018
+    retention_in_days: 30

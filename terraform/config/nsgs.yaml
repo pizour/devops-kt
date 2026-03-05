@@ -156,6 +156,54 @@ subnet_nsgs:
         destination_port_range: "*"
         source_address_prefix: 10.0.0.0/8
         destination_address_prefix: "*"
+  hub-vnet/hub-agw-snet:
+    nsg_name: devops-kt-hub-agw-snet-nsg
+    rules:
+      - name: AllowHTTPInbound
+        priority: 100
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "80"
+        source_address_prefix: Internet
+        destination_address_prefix: "*"
+      - name: AllowGatewayManagerInbound
+        priority: 110
+        direction: Inbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "65200-65535"
+        source_address_prefix: GatewayManager
+        destination_address_prefix: "*"
+      - name: AllowAzureLoadBalancerInbound
+        priority: 120
+        direction: Inbound
+        access: Allow
+        protocol: "*"
+        source_port_range: "*"
+        destination_port_range: "*"
+        source_address_prefix: AzureLoadBalancer
+        destination_address_prefix: "*"
+      - name: AllowBackendOutbound
+        priority: 100
+        direction: Outbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "5000-5001"
+        source_address_prefix: "*"
+        destination_address_prefix: 10.0.0.0/8
+      - name: AllowHealthProbeOutbound
+        priority: 110
+        direction: Outbound
+        access: Allow
+        protocol: Tcp
+        source_port_range: "*"
+        destination_port_range: "80"
+        source_address_prefix: "*"
+        destination_address_prefix: Internet
   spoke1-aks-vnet/spoke1-aks-snet:
     nsg_name: devops-kt-spoke1-aks-snet-nsg
     rules:
