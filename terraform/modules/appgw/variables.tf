@@ -67,10 +67,16 @@ variable "waf_rule_set_version" {
 }
 
 # Frontend
-variable "frontend_port" {
-  description = "Frontend listener port"
+variable "frontend_api1_port" {
+  description = "Frontend listener port for API1"
   type        = number
-  default     = 80
+  default     = 5000
+}
+
+variable "frontend_api2_port" {
+  description = "Frontend listener port for API2"
+  type        = number
+  default     = 5001
 }
 
 # Backend

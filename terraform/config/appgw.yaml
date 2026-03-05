@@ -12,19 +12,18 @@ appgw:
     rule_set_type: OWASP
     rule_set_version: "3.2"
 
-  # Frontend - HTTP only (port 80)
-  frontend_port: 80
+  # Frontend - HTTP only, two ports for two APIs
+  frontend_api1_port: 5000
+  frontend_api2_port: 5001
 
   # Backend pools target the NVA firewall VM
-  # Path-based routing: /api1 -> port 5000, /api2 -> port 5001
+  # Port-based routing: frontend port 80 -> backend port 5000, frontend port 81 -> backend port 5001
   backend:
     api1:
-      path: "/api1/*"
       port: 5000
       protocol: Http
       request_timeout: 30
     api2:
-      path: "/api2/*"
       port: 5001
       protocol: Http
       request_timeout: 30

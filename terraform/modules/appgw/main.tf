@@ -50,17 +50,31 @@ resource "azurerm_application_gateway" "appgw" {
     public_ip_address_id = azurerm_public_ip.appgw_pip.id
   }
 
-  # Frontend Port - HTTP only
+  # Frontend Port - HTTP for API1
   frontend_port {
-    name = "http-port"
-    port = var.frontend_port
+    name = "http-port-api1"
+    port = var.frontend_api1_port
   }
 
-  # HTTP Listener
+  # Frontend Port - HTTP for API2
+  frontend_port {
+    name = "http-port-api2"
+    port = var.frontend_api2_port
+  }
+
+  # HTTP Listener - API1
   http_listener {
-    name                           = "http-listener"
+    name                           = "http-listener-api1"
     frontend_ip_configuration_name = "appgw-frontend-ip"
-    frontend_port_name             = "http-port"
+    frontend_port_name             = "http-port-api1"
+    protocol                       = "Http"
+  }
+
+  # HTTP Listener - API2
+  http_listener {
+    name                           = "http-listener-api2"
+    frontend_ip_configuration_name = "appgw-frontend-ip"
+    frontend_port_name             = "http-port-api2"
     protocol                       = "Http"
   }
 
@@ -114,34 +128,24 @@ resource "azurerm_application_gateway" "appgw" {
     port                = var.backend_api2_port
   }
 
-  # URL Path Map for path-based routing
-  url_path_map {
-    name                               = "path-based-routing"
-    default_backend_address_pool_name  = "nva-backend-pool"
-    default_backend_http_settings_name = "api1-http-settings"
-
-    path_rule {
-      name                       = "api1-rule"
-      paths                      = ["/api1/*"]
-      backend_address_pool_name  = "nva-backend-pool"
-      backend_http_settings_name = "api1-http-settings"
-    }
-
-    path_rule {
-      name                       = "api2-rule"
-      paths                      = ["/api2/*"]
-      backend_address_pool_name  = "nva-backend-pool"
-      backend_http_settings_name = "api2-http-settings"
-    }
+  # Request Routing Rule - API1 (port 80 -> backend port 5000)
+  request_routing_rule {
+    name                       = "api1-rule"
+    priority                   = 100
+    rule_type                  = "Basic"
+    http_listener_name         = "http-listener-api1"
+    backend_address_pool_name  = "nva-backend-pool"
+    backend_http_settings_name = "api1-http-settings"
   }
 
-  # Request Routing Rule - Path-based
+  # Request Routing Rule - API2 (port 81 -> backend port 5001)
   request_routing_rule {
-    name                       = "path-based-rule"
-    priority                   = 100
-    rule_type                  = "PathBasedRouting"
-    http_listener_name         = "http-listener"
-    url_path_map_name          = "path-based-routing"
+    name                       = "api2-rule"
+    priority                   = 200
+    rule_type                  = "Basic"
+    http_listener_name         = "http-listener-api2"
+    backend_address_pool_name  = "nva-backend-pool"
+    backend_http_settings_name = "api2-http-settings"
   }
 
   tags = var.common_tags

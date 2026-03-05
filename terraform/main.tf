@@ -99,7 +99,8 @@ module "appgw" {
   waf_rule_set_type    = local.appgw.waf.rule_set_type
   waf_rule_set_version = local.appgw.waf.rule_set_version
 
-  frontend_port = local.appgw.frontend_port
+  frontend_api1_port = local.appgw.frontend_api1_port
+  frontend_api2_port = local.appgw.frontend_api2_port
 
   backend_api1_port       = local.appgw.backend.api1.port
   backend_api2_port       = local.appgw.backend.api2.port
