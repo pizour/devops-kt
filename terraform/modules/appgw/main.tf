@@ -86,7 +86,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   # Backend HTTP Settings - API1 (port 5000)
   backend_http_settings {
-    name                  = "api1-http-settings"
+    name                  = "api1-http-backend-settings"
     cookie_based_affinity = "Disabled"
     port                  = var.backend_api1_port
     protocol              = "Http"
@@ -96,7 +96,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   # Backend HTTP Settings - API2 (port 5001)
   backend_http_settings {
-    name                  = "api2-http-settings"
+    name                  = "api2-http-backend-settings"
     cookie_based_affinity = "Disabled"
     port                  = var.backend_api2_port
     protocol              = "Http"
@@ -135,7 +135,7 @@ resource "azurerm_application_gateway" "appgw" {
     rule_type                  = "Basic"
     http_listener_name         = "http-listener-api1"
     backend_address_pool_name  = "nva-backend-pool"
-    backend_http_settings_name = "api1-http-settings"
+    backend_http_settings_name = "api1-http-backend-settings"
   }
 
   # Request Routing Rule - API2 (port 81 -> backend port 5001)
@@ -145,7 +145,7 @@ resource "azurerm_application_gateway" "appgw" {
     rule_type                  = "Basic"
     http_listener_name         = "http-listener-api2"
     backend_address_pool_name  = "nva-backend-pool"
-    backend_http_settings_name = "api2-http-settings"
+    backend_http_settings_name = "api2-http-backend-settings"
   }
 
   tags = var.common_tags
